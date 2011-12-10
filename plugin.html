@@ -2,20 +2,21 @@
 <head>
 <script src="appEnd.js"></script>
 <script>
-var chromeConnection = {
-  recv: function(msg) {
+function recv (msg) {
     console.log("crx2app.plugin recv: ", msg);
-  }
-};
-var appEnd = getChromeExtensionPipe(chromeConnection.recv);
-function onLoad() {
-  chromeConnection.send = appEnd.attach();
+    testConnection();
 }
-window.addEventListener('load', onLoad, false);
 
+if (!chrome || !chrome.extension) {
+  window.alert("This file must be loaded from a Chrome extension into an iframe");
+}
+
+var crx2app = getChromeExtensionPipe();
+crx2app.addListener(recv);
+  
 function testConnection() {
   var createData = {};
-  chromeConnection.send({target:'chrome.windows', method:'create', params:[createData]});
+  crx2app.postMessage({target:'chrome.windows', method:'create', params:[createData]});
 }
 </script>
 </head>

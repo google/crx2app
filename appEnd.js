@@ -1,56 +1,75 @@
 // See Purple/license.txt for Google BSD license
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
-/*global window document */
+/*global chrome console */
 
 // Call after document.body is valid
 // @param onMessage: function of message called when extn has data
 // @return: function of message, call when you have data
 
-function getChromeExtensionPipe(onMessage){
+function getChromeExtensionPipe(){
 
   var appEnd = {
-    VERSION: '1',
-    EXTN_EVENT_NAME: 'crxDataReady',   // The App listens for this event type
-    DATA_PREFIX: 'data-crx',           // The App gets/sets this attribute 
-    APP_EVENT_NAME: 'crxAppDataReady', // The App raises this event type
 
-    onLoad: function() {
-      window.removeEventListener('load', this.onLoad, false);
-      this.attach();
-    },
-    
+    // Announce to the extn that we are running after we were injected,
+    // ask the extn to give us a port name unique to this contentScript
     attach: function() {
-      this.elt = document.body;
-      
-      // prepare for incoming data
-      this.elt.addEventListener(this.EXTN_EVENT_NAME, this.fromChromeExtension, false);
-      
-      // prepare to send outgoing data
-      this.event = document.createEvent('Event');
-      this.event.initEvent(this.APP_EVENT_NAME, true, true);
-    
-      // close over the object
-      return function(jsonObj) {
-        var msg = JSON.stringify(jsonObj);
-        // The element and event are constant, only the msg changes
-        appEnd.elt.setAttribute(appEnd.DATA_PREFIX, msg);
-        appEnd.elt.dispatchEvent(appEnd.event);
-        console.log("appEnd dispatch ", appEnd.event);
+      var request = {
+        name:    getChromeExtensionPipe.NAME, 
+        version: getChromeExtensionPipe.VERSION
       };
+      chrome.extension.sendRequest(request, this.onAttach);
+    },
+
+    // Get the assigned name of the port and connect to it
+    //
+    onAttach: function(response) {
+      if (!response.name) {
+        console.error("crx2App the extension must send .name in response", response);
+      }
+    
+      this.name = response.name;
+      
+      // open a long-lived connection using the assigned name
+      this.port = chrome.extension.connect({name: this.name});
+    
+      // prepare for extension messages to content-script for app
+      this.port.onMessage.addListener(this.fromExtnToApp);
+      
+      // signal the app that we are ready
+      this.fromExtnToApp({source:'crx2app', method:'onAttach', params:[]});
+    },
+
+    addListener: function(listener) {
+      this.listener = listener; // may be null
     },
     
-    fromChromeExtension: function(event) {
-      var data = this.elt.getAttribute(this.DATA_PREFIX);
-      onMessage(data);
+    fromExtnToApp: function(msgObj) {
+      if (this.listener) {
+        this.listener(msgObj);
+      } // else no listener
+    },
+
+    fromAppToExtn: function(msgObj) {
+      this.port.postMessage(msgObj);
     },
     
     _bindListeners: function() {
-      this.fromChromeExtension = this.fromChromeExtension.bind(this);
+      this.onAttach = this.onAttach.bind(this);
+      this.fromExtnToApp = this.fromExtnToApp.bind(this);
+      this.fromAppToExtn = this.fromAppToExtn.bind(this);
     }
   };
   
   appEnd._bindListeners();
+  appEnd.attach();
   
-  return appEnd;
+  return {
+    postMessage: appEnd.fromAppToExtn,
+    addListener: appEnd.addListener
+  };
 }
+
+getChromeExtensionPipe.NAME = 'crx2app';
+getChromeExtensionPipe.VERSION = '1';
+

@@ -52,7 +52,7 @@ var crxEnd = {
   // introduction callback from content script
   onRequest: function(request, sender, sendResponse) {
     // Do I know you?
-    if (sender.tab && request.name === config.PROXY_NAME) {
+    if (sender.tab && request.name === getChromeExtensionPipe.NAME) {
       
       var origin = this.getOrigin(sender.tab.url);
       var windowsAdapter = this.getWindowsAdaptersByOrigin(origin);
@@ -68,7 +68,7 @@ var crxEnd = {
     }
   },
   
-  // When the content script connects its port has the name we gave it.
+  // When the app connects its port has the name we gave it.
   onConnect: function(port) {
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
@@ -80,10 +80,9 @@ var crxEnd = {
     }
   },
   
-  // From App via contentScriptProxy
-  onMessage: function(windowsAdapter, msg) {
-    console.log("crx2app/crxEnd: onMessage ", msg);
-    var jsonObj = JSON.parse(msg);
+  // From App 
+  onMessage: function(windowsAdapter, jsonObj) {
+    console.log("crx2app/crxEnd: onMessage ", jsonObj);
     var target = this.chromeAdapters[jsonObj.target];
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
