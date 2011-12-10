@@ -1,0 +1,26 @@
+<html>
+<head>
+<script src="appEnd.js"></script>
+<script>
+var chromeConnection = {
+  recv: function(msg) {
+    console.log("crx2app.plugin recv: ", msg);
+  }
+};
+var appEnd = getChromeExtensionPipe(chromeConnection.recv);
+function onLoad() {
+  chromeConnection.send = appEnd.attach();
+}
+window.addEventListener('load', onLoad, false);
+
+function testConnection() {
+  var createData = {};
+  chromeConnection.send({target:'chrome.windows', method:'create', params:[createData]});
+}
+</script>
+</head>
+<body>
+<h1>appEnd test</h1>
+<button onclick='testConnection()'>Send Message to Open Window</button>
+</body>
+<html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+// crx2app
+// Copyright 2011 Google Inc. 
+// johnjbarton@google.com
+-->
+<html>
+  <head>
+<script src="PostSource.js"></script>
+
+<script src="WindowsAdapter.js"></script>
+<script src="TabsAdapter.js"></script>
+<script src="DebuggerAdapter.js"></script>
+<script src="crxEnd.js"></script>
+
+<script>
+var config = {
+  VERSION: '1',
+  PROXY_NAME: 'crx2AppProxy',
+  EXTN_EVENT_NAME: 'crxDataReady',    // The App listens for this event type
+  DATA_PREFIX: 'data-crx',            // The App gets/sets this attribute 
+  APP_EVENT_NAME: 'crxAppDataReady',  // The App raises this event type
+};
+
+var  WindowsAdapter = makeWindowsAdapter(chrome, PostSource);
+var  TabsAdapter = makeTabsAdapter(chrome, PostSource);
+var  DebuggerAdapter = makeDebuggerAdapter(chrome, PostSource);
+
+function adapterFactory(origin) {
+  var adapters = {};
+  var windowsAdapter = new WindowsAdapter(origin);
+  adapters[WindowsAdapter.path] = windowsAdapter;
+  adapters[TabsAdapter.path] = new TabsAdapter(windowsAdapter);
+  adapters[DebuggerAdapter.path] = new DebuggerAdapter(windowsAdapter);
+  return adapters;
+};
+
+var crxEnd = makeCxrEnd(config, chrome);
+crxEnd.attach(adapterFactory);
+</script>
+  </head>
+  <body>
+
+  </body>
+</html>

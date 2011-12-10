@@ -1,0 +1,22 @@
+{
+  "name": "crx2app: Barrier proxy for WebApps to chrome.extension",
+  "version": "0.1",
+  "minimum_chrome_version": "17",
+  "description": "Allows a Web app to debug a Web app in another window",
+  "background_page" : "background.html",
+
+  "permissions" :
+    [
+      "experimental",
+      "*://*/*",
+      "tabs",
+      "contextMenus",
+      "webNavigation"
+    ],
+   "content_scripts": [
+     {
+       "matches": ["http://*/file/H/plugin.html*"],
+       "js": ["contentScriptProxy.js"]
+     }
+   ]
+}
