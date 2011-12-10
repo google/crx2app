@@ -12,11 +12,5 @@
       "tabs",
       "contextMenus",
       "webNavigation"
-    ],
-   "content_scripts": [
-     {
-       "matches": ["http://*/file/H/plugin.html*"],
-       "js": ["contentScriptProxy.js"]
-     }
-   ]
+    ]
 }

@@ -78,8 +78,8 @@ TabsAdapter.prototype = {
   },
   
   _bindListeners: function() {
-    this.onCreated.bind(this);
-    this.onRemoved.bind(this);
+    this.onCreated = this.onCreated.bind(this);
+    this.onRemoved = this.onRemoved.bind(this);
   }
 };
 

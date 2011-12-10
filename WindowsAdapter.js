@@ -104,9 +104,9 @@ WindowsAdapter.prototype = {
   },
 
   _bindListeners: function() {
-    this.onCreated.bind(this);
-    this.onRemoved.bind(this);
-    this.onGetAll.bind(this);
+    this.onCreated = this.onCreated.bind(this);
+    this.onRemoved = this.onRemoved.bind(this);
+    this.onGetAll = this.onGetAll.bind(this);
   }
 };
 
