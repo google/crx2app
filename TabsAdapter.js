@@ -9,6 +9,8 @@ function TabsAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter; // the adapter for our chrome.window
   this.port = windowsAdapter.port;
   this._bindListeners();
+  
+  chrome.tabs.onCreated.addListener(this.onCreated);
   chrome.tabs.onRemoved.addListener(this.onRemoved);
   // chrome.tabs functions available to client WebApps
   this.api = ['create', 'update', 'remove'];
@@ -49,23 +51,29 @@ TabsAdapter.prototype = {
   // Events
   
   onCreated: function(chromeTab) {
-    var index = this.windowsAdapter.chromeWindowIds.indexOf(chromeTab.windowId);
-    if (index > -1) {
+    this.barrier(chromeTab.id, arguments, function(tabId, index) {
       this.windowsAdapter.chromeTabIds.push(chromeTab.id);
       this.postMessage({source:this.getPath(), method: 'onCreated', params: [chromeTab]});
-    } // else not for us
+      var details = {tabId: tabId, path: "warnDebugging.html&about="+windowsAdapter.debuggerOrigin};
+      chrome.experimental.infobars.show(details, this.noErrorPosted);
+    });
   },
   
-  
   onRemoved: function(tabId, removeInfo) {
-    var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
-    if (index > -1) {
+    this.barrier(tabId, arguments, function(tabId, removeInfo, index) {
       this.windowsAdapter.chromeTabIds.splice(index, 1);
-      this.postMessage({source: this.getPath(), method: 'onRemoved', params:[index, removeInfo]});
-    } // else not ours
+      this.postMessage({source: this.getPath(), method: 'onRemoved', params:[tabId, removeInfo]});
+    });
   },
   
   //---------------------------------------------------------------------------------------------------------
+  
+  barrier: function (tabId, args, action) {
+    var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
+    if (index > -1) {
+      action.apply( this, args.concat([index]) );
+    } // else not ours
+  },
   
   _cleanseCreateProperties: function(createProperties) {
     console.assert( (typeof createProperties.id === 'number'), "The createProperties.id must be a number");

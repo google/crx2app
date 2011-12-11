@@ -26,10 +26,11 @@ function WindowsAdapter(origin) {
   this._bindListeners();
   // chrome.window functions available to client WebApps
   this.api = ['create', 'getAll'];
+  chrome.windows.onCreated.addListener(this.onCreated);
+  chrome.windows.onRemoved.addListener(this.onRemoved);
 }
 
 WindowsAdapter.path = 'chrome.windows';
-;
 WindowsAdapter.instanceCounter = 0;
 
 WindowsAdapter.prototype = {

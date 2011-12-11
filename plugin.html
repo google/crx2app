@@ -4,24 +4,99 @@
 <script>
 function recv (msg) {
     console.log("crx2app.plugin recv: ", msg);
-    testConnection();
 }
 
 if (!chrome || !chrome.extension) {
   window.alert("This file must be loaded from a Chrome extension into an iframe");
 }
 
-var crx2app = getChromeExtensionPipe();
-crx2app.addListener(recv);
+var testDriver = {
+
+  initialize: function(connection) {
+    this.connection = connection;
+    this.listElement = document.getElementById('result');
+    this.connection.addListener(this.recv.bind(this));
+    this.cases = [];
+  },
+
+  addCase: function(target, method, params, expected) {
+    this.cases.push({probe: {target: target, method: method, params: params}, expected: expected});
+  },
   
-function testConnection() {
+  nextCase: function() {
+    if (typeof (this.caseNumber) === 'undefined') {
+      this.caseNumber = 0;
+    } else {
+      this.caseNumber++;
+    }
+    if (this.caseNumber < this.cases.length) {
+      this.case = this.cases[this.caseNumber];
+      this.expected = this.case.expected;
+      this.connection.postMessage(this.case.probe);
+    } else {
+      console.log("Finished "+this.cases.length + " cases");
+    }
+  },
+
+  run: function() {
+    delete this.caseNumber;
+    this.listElement.innerHTML = "";
+    this.nextCase();
+  },
+  
+  recv: function(msgObj) {
+    if (!msgObj.source || !msgObj.method || !msgObj.params) {
+      this.error(msgObj);
+    } else {
+      if ( (msgObj.source === this.expected.source) &&
+           (msgObj.method === this.expected.method) ){
+         this.addCaseReport(msgObj, this.case.otherMessages, true);
+         this.nextCase();
+      } else {
+        this.case.otherMessages = this.case.otherMessages || [];
+        this.case.otherMessages.push(msgObj);
+      }
+    }
+  },
+  
+  error: function(msgObj) {
+    var elt = this.addCaseReport(msgObj, [], false);
+    console.error("Invalid response", msgObj);
+  },
+  
+  addCaseReport: function(result, otherMessages, pass) {
+    console.trace("addCaseReport "+pass);
+    var dt = document.createElement('dt');
+    dt.innerHTML = (this.caseNumber+1) + ") " + this.expected.method;
+    dt.classList.add( pass ? 'pass' : 'fail' );
+    this.listElement.appendChild(dt);
+    var dd = document.createElement('dd');
+    dd.innerHTML = result +" and " + otherMessages.length + " other messages ";
+    this.listElement.appendChild(dd);
+  }
+};
+  
+function testConnection(connection) {
+  testDriver.initialize(connection);
   var createData = {};
-  crx2app.postMessage({target:'chrome.windows', method:'create', params:[createData]});
+  testDriver.addCase('chrome.windows', 'create', [createData], {source: 'chrome.windows', method: 'onCreated'});
+  testDriver.run();
 }
+var connection = getChromeExtensionPipe(function() {
+  console.log("Ready ");
+  document.getElementById('test').classList.remove('disabled');
+});
 </script>
+<style>
+.disabled {
+  display: none;
+}
+</style>
 </head>
 <body>
 <h1>appEnd test</h1>
-<button onclick='testConnection()'>Send Message to Open Window</button>
+<button id='test' class='disabled' onclick='testConnection(connection)'>Push To Test</button>
+<dl id='result'>
+</dl>
 </body>
 <html>

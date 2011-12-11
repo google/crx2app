@@ -12,5 +12,9 @@
       "tabs",
       "contextMenus",
       "webNavigation"
-    ]
+    ],
+  "icons":
+    {
+      "16" : "orion16.png"
+    }
 }

@@ -7,7 +7,7 @@
 // @param onMessage: function of message called when extn has data
 // @return: function of message, call when you have data
 
-function getChromeExtensionPipe(){
+function getChromeExtensionPipe(callback){
 
   var appEnd = {
 
@@ -37,7 +37,7 @@ function getChromeExtensionPipe(){
       this.port.onMessage.addListener(this.fromExtnToApp);
       
       // signal the app that we are ready
-      this.fromExtnToApp({source:'crx2app', method:'onAttach', params:[]});
+      callback();
     },
 
     addListener: function(listener) {
@@ -58,13 +58,14 @@ function getChromeExtensionPipe(){
       this.onAttach = this.onAttach.bind(this);
       this.fromExtnToApp = this.fromExtnToApp.bind(this);
       this.fromAppToExtn = this.fromAppToExtn.bind(this);
+      this.addListener = this.addListener.bind(this);
     }
   };
   
   appEnd._bindListeners();
   appEnd.attach();
   
-  return {
+  return {  // these functions are bound to appEnd, not the return object
     postMessage: appEnd.fromAppToExtn,
     addListener: appEnd.addListener
   };
