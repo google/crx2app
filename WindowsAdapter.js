@@ -22,12 +22,11 @@ function WindowsAdapter(origin) {
   this.instanceIndex = ++WindowsAdapter.instanceCounter;
   this.name = WindowsAdapter.path + '.' + WindowsAdapter.instanceCounter;
   this.chromeWindowIds = [];  // only these ids can be used by client
-  this.chromeTabIds = [];
+  this.chromeTabIds = [];     // only these tabs can be used by client
   this._bindListeners();
   // chrome.window functions available to client WebApps
   this.api = ['create', 'getAll'];
-  chrome.windows.onCreated.addListener(this.onCreated);
-  chrome.windows.onRemoved.addListener(this.onRemoved);
+  this._connect();
 }
 
 WindowsAdapter.path = 'chrome.windows';
@@ -89,7 +88,19 @@ WindowsAdapter.prototype = {
   },
 
   //---------------------------------------------------------------------------------------------------------
+  _connect: function() {
+    // prepare to record the windows allowed to debugger
+    chrome.windows.onCreated.addListener(this.onCreated);
+    // prepare to clean up the records
+    chrome.windows.onRemoved.addListener(this.onRemoved);
+  },
+  
+  _disconnect: function() {
+    chrome.windows.onCreated.removeListener(this.onCreated);
+    chrome.windows.onRemoved.removeListener(this.onRemoved);
+  },
 
+  //---------------------------------------------------------------------------------------------------------
   // copy allowed fields, force values on others
   _cleanseCreateData: function(createData) {
     return {

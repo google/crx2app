@@ -33,6 +33,11 @@ var crxEnd = {
     chrome.extension.onRequest.addListener(this.onRequest);
   },
   
+  detach: function() {
+    chrome.extension.onRequest.removerListener(this.onRequest);
+    this.adapterFactory['chrome.tabs']._disconnect();
+  },
+  
   getWindowsAdaptersByOrigin: function(origin) {
     var windowsAdapter;
     Object.keys(this.windowsAdaptersByName).forEach(function(name) {
@@ -75,6 +80,8 @@ var crxEnd = {
       windowsAdapter.setPort(port);
       // prepare for message traffic
       port.onMessage.addListener(this.onMessage.bind(this, windowsAdapter));
+      // prepare for unload
+      port.onDisconnect.addListener(this.onDisconnect.bind(this));
     } else {
       console.error("crx2app/crxEnd: no windowsAdapter for port.name: "+port.name);
     }
@@ -102,6 +109,15 @@ var crxEnd = {
     }
   },
   
+  onDisconnect: function(port) {
+    console.log("onDisconnected", port);
+    var windowsAdapter = this.windowsAdapterByName[port.name];
+    if (windowsAdapter) {
+      windowsAdapter.disconnect();
+      delete this.windowsAdapterByName[port.name];
+    } // else not ours
+  },
+  
   getOrigin: function(url) {
     // eg http://www.example.com/path
     //      0  1 2
@@ -114,6 +130,7 @@ var crxEnd = {
   _bindListeners: function() {
     this.onRequest = this.onRequest.bind(this);
     this.onConnect = this.onConnect.bind(this);
+    this.onDisconnect = this.onDisconnect.bind(this);
     // onMessage is bound in listener call
   }
 };

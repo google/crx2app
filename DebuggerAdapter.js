@@ -14,6 +14,7 @@ function makeDebuggerAdapter(chrome, PostSource) {
 
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
+  this.debuggeeTabIds = [];
   this.port = windowsAdapter.port;
   this._bindListeners();
   this.api = ['attach', 'sendCommand', 'detach'];
@@ -33,11 +34,16 @@ DebuggerAdapter.prototype = {
     if (!this._checkDebuggee(debuggee)) {
       return;
     }
+    this.debuggeeTabIds.push(debuggee.tabId);
+    
     // prepare for events from chrome.debugger
     chrome.debugger.onEvent.addListener(this.onEvent);
     
     // Setup the connection to the devtools backend
     chrome.debugger.attach({tabId: debuggee.tabId}, version, this.noErrorPosted);
+    
+    // detach if the tab is removed
+    chrome.tabs.onRemoved.addListener(this.onRemoved);
   },
     
   sendCommand: function(debuggee, method, params) {
@@ -57,12 +63,18 @@ DebuggerAdapter.prototype = {
     if (!this._checkDebuggee(debuggee)) {
       return;
     }
+    chrome.debugger.onEvent.removeListener(this.onEvent);    
     
     chrome.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
+    var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
+    if (index > -1) {
+      this.debuggeeTabIds.splice(index, 1);
+    } else {
+      console.error("DebuggerAdapter detach ERROR, no such debuggee tabId "+debuggee.tabId);
+    }
   },
   
   //-------------------------------------------------------------------------
-  // Implementation 
   
   // Forward debugger events as JSON
   onEvent: function(debuggee, method, params) {
@@ -87,6 +99,14 @@ DebuggerAdapter.prototype = {
     }
   },
   
+  // The debuggee tab was removed
+  onRemoved: function(tabId, removeInfo) {
+    var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
+    if (index > -1) {
+      this.detach({tabId: tabId});
+    } // else not ours
+  },
+  
   _checkDebuggee: function(debuggee) {
     if (!this.windowsAdapter.isAccessibleTab(debuggee.tabId)) {
        this.postError("Debuggee tabId "+debuggee.tabId+" is not accessible");
@@ -100,6 +120,7 @@ DebuggerAdapter.prototype = {
     this.onEvent = this.onEvent.bind(this);
     // onResponse bound for each call
     this.onDetach = this.onDetach.bind(this);
+    this.onRemoved = this.onRemoved.bind(this);
   }
 };
 

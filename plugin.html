@@ -32,6 +32,8 @@ var testDriver = {
     if (this.caseNumber < this.cases.length) {
       this.case = this.cases[this.caseNumber];
       this.expected = this.case.expected;
+      this.otherMessages = [];
+
       this.connection.postMessage(this.case.probe);
     } else {
       console.log("Finished "+this.cases.length + " cases");
@@ -50,11 +52,10 @@ var testDriver = {
     } else {
       if ( (msgObj.source === this.expected.source) &&
            (msgObj.method === this.expected.method) ){
-         this.addCaseReport(msgObj, this.case.otherMessages, true);
+         this.addCaseReport(msgObj, this.otherMessages, true);
          this.nextCase();
       } else {
-        this.case.otherMessages = this.case.otherMessages || [];
-        this.case.otherMessages.push(msgObj);
+        this.otherMessages.push(msgObj);
       }
     }
   },

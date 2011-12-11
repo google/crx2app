@@ -10,14 +10,8 @@ function TabsAdapter(windowsAdapter) {
   this.port = windowsAdapter.port;
   this._bindListeners();
   
-  // build a record of the tabs being debugged
-  chrome.tabs.onCreated.addListener(this.onCreated);  
-  // prepare to update debuggee records
-  chrome.windows.onRemoved.addListener(this.onUpdated);
-  // prepare to clean up the records
-  chrome.tabs.onRemoved.addListener(this.onRemoved);
-  // chrome.tabs functions available to client WebApps
   this.api = ['create', 'update', 'remove'];
+  this._connect();
 }
 
 TabsAdapter.path = 'chrome.tabs';
@@ -86,7 +80,20 @@ TabsAdapter.prototype = {
     } // else not ours
   },
   
-  _watchDebuggerTabs: function(tabId) {
+  _connect: function() {
+    // build a record of the tabs being debugged
+    chrome.tabs.onCreated.addListener(this.onCreated);  
+    // prepare to update debuggee records
+    chrome.windows.onRemoved.addListener(this.onUpdated);
+    // prepare to clean up the records
+    chrome.tabs.onRemoved.addListener(this.onRemoved);
+    // chrome.tabs functions available to client WebApps
+  },
+
+  _disconnect: function() {
+    chrome.tabs.onCreated.removeListener(this.onCreated);  
+    chrome.windows.onRemoved.removeListener(this.onUpdated);
+    chrome.tabs.onRemoved.removeListener(this.onRemoved);
   },
   
   _cleanseCreateProperties: function(createProperties) {
