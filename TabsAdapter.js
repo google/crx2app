@@ -10,7 +10,11 @@ function TabsAdapter(windowsAdapter) {
   this.port = windowsAdapter.port;
   this._bindListeners();
   
-  chrome.tabs.onCreated.addListener(this.onCreated);
+  // build a record of the tabs being debugged
+  chrome.tabs.onCreated.addListener(this.onCreated);  
+  // prepare to update debuggee records
+  chrome.windows.onRemoved.addListener(this.onUpdated);
+  // prepare to clean up the records
   chrome.tabs.onRemoved.addListener(this.onRemoved);
   // chrome.tabs functions available to client WebApps
   this.api = ['create', 'update', 'remove'];
@@ -54,8 +58,14 @@ TabsAdapter.prototype = {
     this.barrier(chromeTab.id, arguments, function(tabId, index) {
       this.windowsAdapter.chromeTabIds.push(chromeTab.id);
       this.postMessage({source:this.getPath(), method: 'onCreated', params: [chromeTab]});
-      var details = {tabId: tabId, path: "warnDebugging.html&about="+windowsAdapter.debuggerOrigin};
+      var details = {tabId: tabId, path: "warnDebugging.html&about="+this.windowsAdapter.debuggerOrigin};
       chrome.experimental.infobars.show(details, this.noErrorPosted);
+    });
+  },
+  
+  onUpdated: function(tabId, changeInfo, tab) {
+    this.barrier(tabId, arguments, function(tabId, changeInfo, tab) {
+      this.postMessage({source: this.getPath(), method: 'onUpdated', params:[tabId, changeInfo, tab]});
     });
   },
   
@@ -67,12 +77,16 @@ TabsAdapter.prototype = {
   },
   
   //---------------------------------------------------------------------------------------------------------
-  
+  // Call the action iff the tab is allowed to the debugger
+  // action takes the same arguments as the caller of barrier, plus index is available
   barrier: function (tabId, args, action) {
     var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
     if (index > -1) {
       action.apply( this, args.concat([index]) );
     } // else not ours
+  },
+  
+  _watchDebuggerTabs: function(tabId) {
   },
   
   _cleanseCreateProperties: function(createProperties) {
@@ -88,6 +102,7 @@ TabsAdapter.prototype = {
   _bindListeners: function() {
     this.onCreated = this.onCreated.bind(this);
     this.onRemoved = this.onRemoved.bind(this);
+    this.onUpdated = this.onUpdated.bind(this);
   }
 };
 
