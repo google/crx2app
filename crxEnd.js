@@ -115,6 +115,7 @@ var crxEnd = {
     console.trace("crxEnd onDisconnected "+port.name);
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
+      chrome.extension.onConnect.removeListener(this.onConnect);
       windowsAdapter._disconnect();
       delete this.windowsAdaptersByName[port.name];
     } // else not ours
