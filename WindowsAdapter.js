@@ -38,7 +38,10 @@ WindowsAdapter.prototype = {
   
   create: function(createData) {
     var cleanCreateData = this._cleanseCreateData(createData);
-    chrome.windows.create(cleanCreateData, this.onCreated);
+    // we are listening for onCreated events, but
+    // we don't want two onCreated() calls, 
+    // thus we route the response to just check error
+    chrome.windows.create(cleanCreateData, this.noErrorPosted);
   },
   
   getAll: function(getInfo) {
@@ -89,6 +92,7 @@ WindowsAdapter.prototype = {
 
   //---------------------------------------------------------------------------------------------------------
   _connect: function() {
+    console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
     // prepare to record the windows allowed to debugger
     chrome.windows.onCreated.addListener(this.onCreated);
     // prepare to clean up the records
@@ -96,7 +100,7 @@ WindowsAdapter.prototype = {
   },
   
   _disconnect: function() {
-    console.log("WindowsAdapter disconnect "+this.debuggerOrigin);
+    console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin);
     this.setPort(null); // prevent any more messages
     chrome.windows.onCreated.removeListener(this.onCreated);
     chrome.windows.onRemoved.removeListener(this.onRemoved);
