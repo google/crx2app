@@ -96,6 +96,8 @@ WindowsAdapter.prototype = {
   },
   
   _disconnect: function() {
+    console.log("WindowsAdapter disconnect "+this.debuggerOrigin);
+    this.setPort(null); // prevent any more messages
     chrome.windows.onCreated.removeListener(this.onCreated);
     chrome.windows.onRemoved.removeListener(this.onRemoved);
   },

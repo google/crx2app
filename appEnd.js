@@ -3,27 +3,29 @@
 
 /*global chrome console */
 
-// Call after document.body is valid
-// @param onMessage: function of message called when extn has data
-// @return: function of message, call when you have data
 
-function getChromeExtensionPipe(callback){
+// @return: connection object with attach/detach addListener/postMessage
+
+function getChromeExtensionPipe(){
 
   var appEnd = {
 
     // Announce to the extn that we are running after we were injected,
-    // ask the extn to give us a port name unique to this contentScript
-    attach: function() {
+    // ask the extn to give us a port name unique to this connection
+    attach: function(callback) {
       var request = {
         name:    getChromeExtensionPipe.NAME, 
         version: getChromeExtensionPipe.VERSION
       };
-      chrome.extension.sendRequest(request, this.onAttach);
+      chrome.extension.sendRequest(request, this.onAttach.bind(this, callback));
     },
 
+    detach: function() {
+      this.port.disconnect();
+    },
     // Get the assigned name of the port and connect to it
     //
-    onAttach: function(response) {
+    onAttach: function(callback, response) {
       if (!response.name) {
         console.error("crx2App the extension must send .name in response", response);
       }
@@ -33,11 +35,20 @@ function getChromeExtensionPipe(callback){
       // open a long-lived connection using the assigned name
       this.port = chrome.extension.connect({name: this.name});
     
-      // prepare for extension messages to content-script for app
+      // prepare for disconnection
+      this.port.onDisconnect.addListener(this.onDisconnect);
+    
+      // prepare for extension messages to from extn to app
       this.port.onMessage.addListener(this.fromExtnToApp);
       
       // signal the app that we are ready
       callback();
+    },
+    
+    // Our port closed
+    onDisconnect: function() {
+      this.fromExtnToApp({source:'crx2app', method: 'onDisconnect', params:[]});
+      delete this.listener;
     },
 
     addListener: function(listener) {
@@ -55,19 +66,23 @@ function getChromeExtensionPipe(callback){
     },
     
     _bindListeners: function() {
-      this.onAttach = this.onAttach.bind(this);
+      this.onDisconnect = this.onDisconnect.bind(this);
       this.fromExtnToApp = this.fromExtnToApp.bind(this);
+      
+      this.attach = this.attach.bind(this);
+      this.detach = this.detach.bind(this);
       this.fromAppToExtn = this.fromAppToExtn.bind(this);
       this.addListener = this.addListener.bind(this);
     }
   };
   
   appEnd._bindListeners();
-  appEnd.attach();
   
   return {  // these functions are bound to appEnd, not the return object
+    attach: appEnd.attach,
     postMessage: appEnd.fromAppToExtn,
-    addListener: appEnd.addListener
+    addListener: appEnd.addListener,
+    detach: appEnd.detach
   };
 }
 

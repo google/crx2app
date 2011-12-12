@@ -12,11 +12,16 @@ if (!chrome || !chrome.extension) {
 
 var testDriver = {
 
-  initialize: function(connection) {
+  attach: function(connection) {
     this.connection = connection;
     this.listElement = document.getElementById('result');
     this.connection.addListener(this.recv.bind(this));
     this.cases = [];
+  },
+  
+  detach: function() {
+    this.connection.detach();
+    this.connection.addListener(null);
   },
 
   addCase: function(target, method, params, expected) {
@@ -76,27 +81,25 @@ var testDriver = {
     this.listElement.appendChild(dd);
   }
 };
-  
+
 function testConnection(connection) {
-  testDriver.initialize(connection);
-  var createData = {};
-  testDriver.addCase('chrome.windows', 'create', [createData], {source: 'chrome.windows', method: 'onCreated'});
-  testDriver.run();
+  connection.attach(function() {
+    console.log("Ready ");
+
+    testDriver.attach(connection);
+    var createData = {};
+    testDriver.addCase('chrome.windows', 'create', [createData], {source: 'chrome.windows', method: 'onCreated'});
+    testDriver.run();
+    // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
+    setTimeout(testDriver.detach.bind(testDriver), 3000);
+  });
 }
-var connection = getChromeExtensionPipe(function() {
-  console.log("Ready ");
-  document.getElementById('test').classList.remove('disabled');
-});
+var connection = getChromeExtensionPipe();
 </script>
-<style>
-.disabled {
-  display: none;
-}
-</style>
 </head>
 <body>
 <h1>appEnd test</h1>
-<button id='test' class='disabled' onclick='testConnection(connection)'>Push To Test</button>
+<button id='test'  onclick='testConnection(connection)'>Push To Test</button>
 <dl id='result'>
 </dl>
 </body>

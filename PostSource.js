@@ -14,7 +14,10 @@ function PostSource(path) {
     },
 
     postMessage: function(msgObj) {
+      if (this.port) {
+        console.log("PostSource.postMessage "+this.port.name, msgObj);
         this.port.postMessage(msgObj);
+      } // else our port is not open
     },  
   
     postError: function(msg) {
