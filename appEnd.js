@@ -13,6 +13,9 @@ function getChromeExtensionPipe(){
     // Announce to the extn that we are running after we were injected,
     // ask the extn to give us a port name unique to this connection
     attach: function(callback) {
+      if (!chrome || !chrome.extension) {
+        throw new Error("Must be loaded into an iframe using a chrome extension url");
+      }
       var request = {
         name:    getChromeExtensionPipe.NAME, 
         version: getChromeExtensionPipe.VERSION
