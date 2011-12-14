@@ -46,10 +46,15 @@ var crxEnd = {
       }
     }, this);
     
-    if (!windowsAdapter) {
+    if (!windowsAdapter) {  // then we need to create one for this origin
       this.chromeAdapters = this.adapterFactory(origin);
       windowsAdapter = this.chromeAdapters['chrome.windows'];
       this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
+    } else {                
+      // we can reuse the existing adapter
+      delete this.windowsAdaptersByName[windowsAdapter.name]; // after disassociating it from our list,
+      windowsAdapter.port.disconnect();                       // disconnecting the channel,
+      windowsAdapter.setPort(null);                           // and clearing its state
     }
     return windowsAdapter;
   },
@@ -63,7 +68,9 @@ var crxEnd = {
       var windowsAdapter = this.getWindowsAdaptersByOrigin(origin);
       
       // prepare for connection
-      chrome.extension.onConnect.addListener(this.onConnect);
+      if ( !chrome.extension.onConnect.hasListener(this.onConnect) ) {
+        chrome.extension.onConnect.addListener(this.onConnect);
+      }
       
       // give the proxy it's name, ending our introduction
       sendResponse({name: windowsAdapter.name});
@@ -79,10 +86,14 @@ var crxEnd = {
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
       windowsAdapter.setPort(port);
+
       // prepare for message traffic
-      port.onMessage.addListener(this.onMessage.bind(this, windowsAdapter));
+      windowsAdapter.onMessage = this.onMessage.bind(this, windowsAdapter);
+      port.onMessage.addListener(windowsAdapter.onMessage);
+
       // prepare for unload
-      port.onDisconnect.addListener(this.onDisconnect.bind(this));
+      windowsAdapter.onDisconnect = this.onDisconnect.bind(this);
+      port.onDisconnect.addListener(windowsAdapter.onDisconnect);
     } else {
       console.error("crx2app/crxEnd: no windowsAdapter for port.name: "+port.name);
     }
