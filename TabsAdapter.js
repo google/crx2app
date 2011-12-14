@@ -49,11 +49,12 @@ TabsAdapter.prototype = {
   // Events
   
   onCreated: function(chromeTab) {
-    this.barrier(chromeTab.id, arguments, function(tabId, index) {
-      this.windowsAdapter.chromeTabIds.push(chromeTab.id);
+    // The barrier for creation is the target window 
+    this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
+      // |this| is windowsAdapter inside of barrier()
+      this.chromeTabIds.push(chromeTab.id);
       this.postMessage({source:this.getPath(), method: 'onCreated', params: [chromeTab]});
-      var details = {tabId: tabId, path: "warnDebugging.html&about="+this.windowsAdapter.debuggerOrigin};
-      chrome.experimental.infobars.show(details, this.noErrorPosted);
+      this.putUpInfobar(chromeTab.id);     
     });
   },
   
@@ -76,7 +77,8 @@ TabsAdapter.prototype = {
   barrier: function (tabId, args, action) {
     var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
     if (index > -1) {
-      action.apply( this, args.concat([index]) );
+      var _args = Array.prototype.slice.call(args);
+      action.apply( this, _args.concat([index]) );
     } // else not ours
   },
   

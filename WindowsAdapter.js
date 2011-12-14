@@ -58,7 +58,7 @@ WindowsAdapter.prototype = {
   // @param http://code.google.com/chrome/extensions/dev/windows.html#type-Window
   onCreated: function(win) {
     if (!win) {
-      return; // incognito!
+      return; // incognito windows are not supported because we can't track them
     }
     console.assert( !win.tabs || (win.tabs.length === 1), "A newly created chrome.Window should have at most one tab");
     this.chromeWindowIds.push(win.id); // index in this array is our new id
@@ -68,25 +68,30 @@ WindowsAdapter.prototype = {
     }
     this.postMessage({source:this.getPath(), method:'onCreated', params:[win]});
   },
+  
+  putUpInfobar: function(tabId) {
+      var details = {tabId: tabId, path: "warnDebugging.html?debuggerDomain="+this.debuggerOrigin, height: 16};
+      chrome.experimental.infobars.show(details, function(win){
+        console.log("putUpInfobar ", win);
+      });
+  },
 
   // callback from onRemoved, clean up and event the client
   onRemoved: function(windowId) {
-    var index = this.chromeWindowIds.indexOf(windowId);
-    if (index > -1) {
+    this.barrier(windowId, arguments, function(windowId, index) {
       this.chromeWindowIds.splice(index, 1);
       this.postMessage({source:this.getPath(), method:'onRemoved'});
-    }
+    });
   },
 
   // callback from getAll, convert result to subset visible to client
   onGetAll: function(chromeWindows) {
     var cleanWindows = [];
     chromeWindows.forEach(function(win) {
-      var index = this.chromeWindowIds.indexOf(win.id);
-      if (index > -1) {
+      this.barrier(win.id, arguments, function(win) {
         cleanWindows.push(win);
-      } // else not one we track
-    });
+      });
+    }.bind(this));
     this.postMessage({source:this.getPath(), method:'onGetAll', params:cleanWindows});
   },
 
@@ -107,6 +112,17 @@ WindowsAdapter.prototype = {
   },
 
   //---------------------------------------------------------------------------------------------------------
+  // Call the action iff the window is allowed to the debugger
+  // action takes the same arguments as the caller of barrier, plus index is available
+  barrier: function (winId, args, action) {
+    var index = this.chromeWindowIds.indexOf(winId);
+    if (index > -1) {
+      // we probably are called with arguments, not an array
+      var _args = Array.prototype.slice.call(args);
+      action.apply( this, _args.concat([index]) );
+    } // else not ours
+  },
+
   // copy allowed fields, force values on others
   _cleanseCreateData: function(createData) {
     return {
