@@ -1,97 +1,24 @@
 <html>
 <head>
 <script src="appEnd.js"></script>
+<script src="lib/q/q.js"></script>
+<script src="Debugger.js"></script>
 <script>
-function recv (msg) {
-    console.log("crx2app.plugin recv: ", msg);
-}
-
-if (!chrome || !chrome.extension) {
-  window.alert("This file must be loaded from a Chrome extension into an iframe");
-}
-
-var testDriver = {
-
-  attach: function(connection) {
-    this.connection = connection;
-    this.listElement = document.getElementById('result');
-    this.connection.addListener(this.recv.bind(this));
-    this.cases = [];
-  },
-  
-  detach: function() {
-    this.connection.detach();
-    this.connection.addListener(null);
-  },
-
-  addCase: function(target, method, params, expected) {
-    this.cases.push({probe: {target: target, method: method, params: params}, expected: expected});
-  },
-  
-  nextCase: function() {
-    if (typeof (this.caseNumber) === 'undefined') {
-      this.caseNumber = 0;
-    } else {
-      this.caseNumber++;
-    }
-    if (this.caseNumber < this.cases.length) {
-      this.case = this.cases[this.caseNumber];
-      this.expected = this.case.expected;
-      this.otherMessages = [];
-
-      this.connection.postMessage(this.case.probe);
-    } else {
-      console.log("Finished "+this.cases.length + " cases");
-    }
-  },
-
-  run: function() {
-    delete this.caseNumber;
-    this.listElement.innerHTML = "";
-    this.nextCase();
-  },
-  
-  recv: function(msgObj) {
-    if (!msgObj.source || !msgObj.method || !msgObj.params) {
-      this.error(msgObj);
-    } else {
-      if ( (msgObj.source === this.expected.source) &&
-           (msgObj.method === this.expected.method) ){
-         this.addCaseReport(msgObj, this.otherMessages, true);
-         this.nextCase();
-      } else {
-        this.otherMessages.push(msgObj);
-      }
-    }
-  },
-  
-  error: function(msgObj) {
-    var elt = this.addCaseReport(msgObj, [], false);
-    console.error("Invalid response", msgObj);
-  },
-  
-  addCaseReport: function(result, otherMessages, pass) {
-    console.trace("addCaseReport "+pass);
-    var dt = document.createElement('dt');
-    dt.innerHTML = (this.caseNumber+1) + ") " + this.expected.method;
-    dt.classList.add( pass ? 'pass' : 'fail' );
-    this.listElement.appendChild(dt);
-    var dd = document.createElement('dd');
-    dd.innerHTML = result +" and " + otherMessages.length + " other messages ";
-    this.listElement.appendChild(dd);
-  }
-};
 
 function testConnection(connection) {
   connection.attach(function() {
     console.log("Ready ");
 
-    testDriver.attach(connection);
-    var createData = {};
-    testDriver.addCase('chrome.windows', 'create', [createData], {source: 'chrome.windows', method: 'onCreated'});
-    testDriver.run();
-    // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
-    setTimeout(testDriver.detach.bind(testDriver), 3000);
+    var debuggr = new Debugger(connection);
+    var win = debuggr.promiseWindow();
+    Q.when(win, function resolved(win) {
+      console.log("Window as promised ", win);
+      // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
+      connection.detach();
+      connection.addListener(null);
+    }, function rejected(msgObj) {
+      console.error("Debugger.promiseResponse invalid message", msgObj);
+    });
   });
 }
 var connection = getChromeExtensionPipe();
