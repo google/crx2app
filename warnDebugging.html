@@ -14,6 +14,14 @@ body {
 window.addEventListener('load', onLoad, false);
 
 function onLoad() {
+  try { 
+    attachDomain();
+  } catch (exc) {
+    console.error("warnDebugging fails "+exc);
+  }
+}
+
+function attachDomain() {
   // extract the parameters
   var loc = window.location.toString();
   var splits = loc.split('?');
@@ -26,7 +34,7 @@ function onLoad() {
       var value = nvSplit[1];
       if (value) {
         if (name === 'debuggerDomain') {
-         appendDomain(value);
+          appendDomain(value);
         } // else ignore unknown param
       } // else ignore invalid param
     });
