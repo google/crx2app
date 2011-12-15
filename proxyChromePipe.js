@@ -18,14 +18,18 @@ function getChromeExtensionPipe(iframeDomain){
     },
 
     detach: function() {
-      this.port.disconnect();
+      window.removeEventListener('message', this.fromExtnToApp, false);
     },
+    
     // Get the assigned name of the port and connect to it
     //
     onAttach: function(callback, event) {
       if (event.origin === iframeDomain) {
         // Remember our partner
         this.source = event.source; 
+
+        // detach this listener
+        window.removeEventListener('message', this.onIntroduction, false);
         
         // rebind the listener to proxying function
         window.addEventListener('message', this.fromExtnToApp, false);

@@ -16,11 +16,16 @@ function onLoad() {
     // Send messages between chrome and window.parent
     var proxyPoster = new ProxyPoster(connection);
     proxyPoster.attach();
-    
+
+    // prepare for unload
+    window.onbeforeunload = function() {
+      proxyPoster.detach();
+    };
   });
 }
 
 window.addEventListener('load', onLoad, false);
+
 </script>
 </head>
 <body>

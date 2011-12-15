@@ -18,31 +18,42 @@ var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
 var connection = getChromeExtensionPipe(iframeDomain);
 
 function testConnection(connection) {
-  connection.attach(function() {
-    console.log("Ready ");
-
-    var debuggr = new Debugger(connection);
-    var win = debuggr.promiseWindow();
+    var win = connection.debuggr.promiseWindow();
     Q.when(win, function resolved(win) {
       console.log("Window as promised ", win);
-      // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
-      connection.detach();
-      connection.addListener(null);
     }, function rejected(msgObj) {
       console.error("Debugger.promiseResponse invalid message", msgObj);
     });
+}
+
+function attach() {
+  connection.attach(function() {
+    connection.debuggr = new Debugger(connection);
+
+    // we have connected to the extension, release the button
+    var test = document.getElementById('test');
+    test.removeAttribute('disabled');
+    console.log("Ready ");
   });
+}
+
+function detach() {
+  connection.detach();
 }
 
 // simulate loading plugin
 function loadPlugin(url) {
   var iframe = document.createElement('iframe');
   iframe.setAttribute('src', url);
+  iframe.addEventListener('load', attach, false);
+  iframe.addEventListener('unload', detach, false);
   var elt = document.getElementById('loadPluginsHere');
   elt.appendChild(iframe);
 }
 
 window.addEventListener('load', function onLoad() {
+  // whether we load the iframe dynamically or statically, 
+  // the outer load event will come after the iframe load event.
   loadPlugin(iframeDomain + "/plugin.html");
 }, false);
 
@@ -50,7 +61,7 @@ window.addEventListener('load', function onLoad() {
 </head>
 <body>
 <h1>appEnd test</h1>
-<button id='test'  onclick='testConnection(connection)'>Push To Test</button>
+<button id='test' disabled  onclick='testConnection(connection)'>Push To Test</button>
 <dl id='result'>
 </dl>
 <div id="loadPluginsHere">
