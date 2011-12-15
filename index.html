@@ -8,8 +8,52 @@ iframe {
   height: 100%;
 }
 </style>
+<script src="proxyChromePipe.js"></script>
+<script src="lib/q/q.js"></script>
+<script src="Debugger.js"></script>
+<script>
+
+var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+
+var connection = getChromeExtensionPipe(iframeDomain);
+
+function testConnection(connection) {
+  connection.attach(function() {
+    console.log("Ready ");
+
+    var debuggr = new Debugger(connection);
+    var win = debuggr.promiseWindow();
+    Q.when(win, function resolved(win) {
+      console.log("Window as promised ", win);
+      // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
+      connection.detach();
+      connection.addListener(null);
+    }, function rejected(msgObj) {
+      console.error("Debugger.promiseResponse invalid message", msgObj);
+    });
+  });
+}
+
+// simulate loading plugin
+function loadPlugin(url) {
+  var iframe = document.createElement('iframe');
+  iframe.setAttribute('src', url);
+  var elt = document.getElementById('loadPluginsHere');
+  elt.appendChild(iframe);
+}
+
+window.addEventListener('load', function onLoad() {
+  loadPlugin(iframeDomain + "/plugin.html");
+}, false);
+
+</script>
 </head>
 <body>
-<iframe src="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog/plugin.html"></iframe>
+<h1>appEnd test</h1>
+<button id='test'  onclick='testConnection(connection)'>Push To Test</button>
+<dl id='result'>
+</dl>
+<div id="loadPluginsHere">
+</div>
 </body>
 </html>

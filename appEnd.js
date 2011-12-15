@@ -10,7 +10,7 @@ function getChromeExtensionPipe(){
 
   var appEnd = {
 
-    // Announce to the extn that we are running after we were injected,
+    // Announce to the extn that we are running and
     // ask the extn to give us a port name unique to this connection
     attach: function(callback) {
       if (!chrome || !chrome.extension) {
@@ -85,7 +85,9 @@ function getChromeExtensionPipe(){
     attach: appEnd.attach,
     postMessage: appEnd.fromAppToExtn,
     addListener: appEnd.addListener,
-    detach: appEnd.detach
+    detach: appEnd.detach,
+    NAME: getChromeExtensionPipe.NAME,
+    VERSION: getChromeExtensionPipe.VERSION
   };
 }
 

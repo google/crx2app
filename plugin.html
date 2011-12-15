@@ -1,33 +1,29 @@
 <html>
 <head>
 <script src="appEnd.js"></script>
-<script src="lib/q/q.js"></script>
-<script src="Debugger.js"></script>
+<script src="ProxyPoster.js"></script>
 <script>
 
-function testConnection(connection) {
+function onLoad() {
+  
+  // The window.parent must listen for 'message' before allowing this iframe to reach 'load'
+  
+  var connection = getChromeExtensionPipe();
   connection.attach(function() {
-    console.log("Ready ");
-
-    var debuggr = new Debugger(connection);
-    var win = debuggr.promiseWindow();
-    Q.when(win, function resolved(win) {
-      console.log("Window as promised ", win);
-      // Experimentally, if the port.disconnect() is called too fast, it races the chrome.windows.create() responses
-      connection.detach();
-      connection.addListener(null);
-    }, function rejected(msgObj) {
-      console.error("Debugger.promiseResponse invalid message", msgObj);
-    });
+  
+    // We have reached load in this iframe and we have connected to chrome
+  
+    // Send messages between chrome and window.parent
+    var proxyPoster = new ProxyPoster(connection);
+    proxyPoster.attach();
+    
   });
 }
-var connection = getChromeExtensionPipe();
+
+window.addEventListener('load', onLoad, false);
 </script>
 </head>
 <body>
-<h1>appEnd test</h1>
-<button id='test'  onclick='testConnection(connection)'>Push To Test</button>
-<dl id='result'>
-</dl>
+<p>chrome extension iframe</p>
 </body>
-<html>
+</html>
