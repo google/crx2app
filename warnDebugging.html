@@ -8,6 +8,8 @@ body {
 #warning {
   text-align: center;
   width: 100%;
+  height: 24px;
+  font-size: 18px;
 }
 </style>
 <script>
@@ -33,7 +35,7 @@ function attachDomain() {
       var name = nvSplit[0];  
       var value = nvSplit[1];
       if (value) {
-        if (name === 'debuggerDomain') {
+        if (name === 'debuggerDomain' && value !== 'undefined') {
           appendDomain(value);
         } // else ignore unknown param
       } // else ignore invalid param

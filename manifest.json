@@ -1,5 +1,5 @@
 {
-  "name": "crx2app: Barrier proxy for WebApps to chrome.extension",
+  "name": "crx2app: Barrier Proxy Between WebApps and chrome.extension",
   "version": "0.1",
   "minimum_chrome_version": "17",
   "description": "Allows a Web app to debug a Web app in another window",
