@@ -7,18 +7,30 @@ function Debugger(connection) {
   this.connection = connection;
 }
 
+function getRejection(msgObj) {
+  var reason;
+  var props = ['source', 'method', 'params', 'serial'];
+  props.forEach(function(prop) {
+    if (!reason && !msgObj[prop]) {
+      reason = {from: "Debugger", reason: "No "+prop, msgObj: msgObj};
+    }
+  });
+  return reason;
+}
+
 Debugger.prototype = {
   
-  send: function(target, method, params) {
-    this.connection.postMessage({target: target, method: method, params: params});
+  send: function(target, method, params, serial) {
+    this.connection.postMessage({target: target, method: method, params: params, serial: serial});
   },
   
   promiseResponse: function(request, filter) {
     var deferred = Q.defer();
     // close over the deferred for resolution upon response
     this.connection.addListener(function(msgObj) {
-      if (!msgObj.source || !msgObj.method || !msgObj.params) {
-        deferred.reject(msgObj);
+      var rejection = getRejection(msgObj);
+      if (rejection) {
+        deferred.reject(rejection);
       } else {
         if (
           msgObj.source === filter[0] && 
@@ -36,7 +48,7 @@ Debugger.prototype = {
   
   promiseWindow: function() {
     return this.promiseResponse(
-      ['chrome.windows', 'create', [{}] ],
+      ['chrome.windows', 'create', [{}], 1 ],
       ['chrome.windows', 'onCreated']
       );
   } 
@@ -53,6 +65,9 @@ Debugger.prototype.send = function() {
   }
   if (!arguments[2] instanceof Array) {
     throw new Error("Third argument must be an array");
+  }
+  if ( typeof arguments[3] !== 'number' ) {
+    throw new Error("Fourth argument must be a number");
   }
   console.log("Debugger send", this, arguments);
   return _send.apply(this, arguments);

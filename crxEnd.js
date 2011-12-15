@@ -107,13 +107,17 @@ var crxEnd = {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
         var method = target[jsonObj.method];
         if (jsonObj.params instanceof Array) {
-          // send on to chrome
-          method.apply(target, jsonObj.params);
+          if (typeof jsonObj.serial === 'number') {
+            // send on to chrome
+            method.apply(target, [jsonObj.serial].concat(jsonObj.params) );
+          } else {
+            windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method);
+          }
         } else {
-          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array");
+          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array"+jsonObj.target+"."+jsonObj.method);
         }
       } else {
-        windowsAdapter.postError("method \'"+jsonObj.method+"\' is not one of "+target.api.join(',') );
+        windowsAdapter.postError("method \'"+jsonObj.method+"\' is not one of "+jsonObj.target+'.'+target.api.join(',') );
       }
     } else {
       // reply with error

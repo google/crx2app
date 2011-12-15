@@ -7,6 +7,7 @@ var makeTabsAdapter = function(chrome, PostSource) {
 
 function TabsAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter; // the adapter for our chrome.window
+  windowsAdapter.setTabAdapter(this);   // backpointer for onCreated
   this.port = windowsAdapter.port;
   this._bindListeners();
   
@@ -49,13 +50,23 @@ TabsAdapter.prototype = {
   // Events
   
   onCreated: function(chromeTab) {
+    console.log("TabsAdapter onCreated", chromeTab);
     // The barrier for creation is the target window 
+    var tabAdapter = this;
     this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
       // |this| is windowsAdapter inside of barrier()
       this.chromeTabIds.push(chromeTab.id);
-      this.postMessage({source:this.getPath(), method: 'onCreated', params: [chromeTab]});
-      this.putUpInfobar(chromeTab.id);     
+      this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: [chromeTab]});
+      tabAdapter.putUpInfobar(chromeTab.id);     
     });
+  },
+  
+  putUpInfobar: function(tabId) {
+      var details = {tabId: tabId, path: "warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
+      console.log("putUpInfoBar ready", details);
+      chrome.experimental.infobars.show(details, function(win){
+        console.log("putUpInfobar done", win);
+      });
   },
   
   onUpdated: function(tabId, changeInfo, tab) {

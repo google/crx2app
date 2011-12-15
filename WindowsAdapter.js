@@ -36,16 +36,13 @@ WindowsAdapter.prototype = {
   
   // API functions, restricted versions of the chrome.windows functions
   
-  create: function(createData) {
+  create: function(serial, createData) {
     var cleanCreateData = this._cleanseCreateData(createData);
-    // we are listening for onCreated events, but
-    // we don't want two onCreated() calls, 
-    // thus we route the response to just check error
-    chrome.windows.create(cleanCreateData, this.noErrorPosted);
+    chrome.windows.create(cleanCreateData, this.onCreated.bind(this, serial));
   },
   
-  getAll: function(getInfo) {
-    chrome.windows.getAll(getInfo, this.onGetAll);
+  getAll: function(serial, getInfo) {
+    chrome.windows.getAll(getInfo, this.onGetAll.bind(this, serial));
   },
 
   //------------------------------------------------------------------------------------ 
@@ -53,29 +50,39 @@ WindowsAdapter.prototype = {
   isAccessibleTab: function(tabId) {
     return (this.chromeTabIds.indexOf(tabId) > -1);
   },
+  
+  // Called during construction, for onCreated
+  setTabAdapter: function(tabAdapter) {
+    this.tabAdapter = tabAdapter; 
+  },
+  
   //------------------------------------------------------------------------------------ 
   // callback from chrome.windows.create
   // @param http://code.google.com/chrome/extensions/dev/windows.html#type-Window
-  onCreated: function(win) {
+  onCreated: function(serial, win) {
+    console.log('WindowsAdapter.onCreated', arguments);
     if (!win) {
       return; // incognito windows are not supported because we can't track them
     }
     console.assert( !win.tabs || (win.tabs.length === 1), "A newly created chrome.Window should have at most one tab");
-    this.chromeWindowIds.push(win.id); // index in this array is our new id
-    if (!this.listening) {
-      chrome.windows.onRemoved.addListener(this.onRemoved);
-      this.listening = true;
-    }
-    this.postMessage({source:this.getPath(), method:'onCreated', params:[win]});
+    
+    if ( typeof serial === 'number' ) { // then we created the window, track it
+      this.chromeWindowIds.push(win.id); // index in this array is our new id
+      if (!this.listening) {
+        chrome.windows.onRemoved.addListener(this.onRemoved);
+        this.listening = true;
+      }
+      // Notify the app of the new window, as a response
+      this.postMessage({source:this.getPath(), method:'onCreated', params:[win], serial: serial});
+      
+      // We already missed the onCreated event for the tab, it came before window onCreated, 
+      // and did not pass the barrier. 
+      // So send one now for the new window's only tab
+      var tab = win.tabs[0];
+      this.tabAdapter.onCreated(tab);
+    } // else not a response, so not one our app created, so drop the event.
   },
   
-  putUpInfobar: function(tabId) {
-      var details = {tabId: tabId, path: "warnDebugging.html?debuggerDomain="+this.debuggerOrigin, height: 16};
-      chrome.experimental.infobars.show(details, function(win){
-        console.log("putUpInfobar ", win);
-      });
-  },
-
   // callback from onRemoved, clean up and event the client
   onRemoved: function(windowId) {
     this.barrier(windowId, arguments, function(windowId, index) {
@@ -85,23 +92,19 @@ WindowsAdapter.prototype = {
   },
 
   // callback from getAll, convert result to subset visible to client
-  onGetAll: function(chromeWindows) {
+  onGetAll: function(serial, chromeWindows) {
     var cleanWindows = [];
     chromeWindows.forEach(function(win) {
       this.barrier(win.id, arguments, function(win) {
         cleanWindows.push(win);
       });
     }.bind(this));
-    this.postMessage({source:this.getPath(), method:'onGetAll', params:cleanWindows});
+    this.postMessage({source:this.getPath(), method:'onGetAll', params:cleanWindows, serial: serial});
   },
 
   //---------------------------------------------------------------------------------------------------------
   _connect: function() {
     console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
-    // prepare to record the windows allowed to debugger
-    chrome.windows.onCreated.addListener(this.onCreated);
-    // prepare to clean up the records
-    chrome.windows.onRemoved.addListener(this.onRemoved);
   },
   
   _disconnect: function() {
