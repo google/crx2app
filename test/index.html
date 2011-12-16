@@ -5,7 +5,6 @@
 iframe {
   padding: 50px;
   width: 80%;
-  height: 80%;
 }
 </style>
 <script>
@@ -28,13 +27,23 @@ function loadPlugin(url) {
 }
 
 function attach(event) {
-  window.orionPlugin = loadPlugin("openWindowTest.html");
+  window.openWindowPlugin = loadPlugin("openWindowTest.html");
+  window.jsDebuggerPlugin = loadPlugin("jsDebugger.html");
+}
+
+// Fire the test code.
+//
+function testConnection() {
+  window.openWindowPlugin.contentWindow.postMessage("go", "*");
 }
 
 function onMessage(event) {
   console.log("Test page got "+event.data);
-  // release the button
+
   var test = document.getElementById('test');
+  // listen for user clicks
+  test.addEventListener('click', testConnection, false);
+  // release the button
   test.removeAttribute('disabled');
 }
 
@@ -44,22 +53,14 @@ function onLoad() {
   
   // listen for our plugin to be ready
   window.addEventListener('message', onMessage, false);
- 
+  
   // add the plugin
   attach();
-}
-
-// Fire the test code.
-//
-function testConnection() {
-  window.orionPlugin.contentWindow.postMessage("go", "*");
 }
 
 // as soon as we load, setup the test
 //
 window.addEventListener('load', onLoad, false);
-window.addEventListener('click', testConnection, false);
-
 
 </script>
 </head>

@@ -6,12 +6,17 @@
 <script src="../test/openWindowTest.js"></script>
 <script>
 
+/*global getChromeExtensionPipe Debugger window Q console*/
+
 // We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
 
 var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
 
 var connection = getChromeExtensionPipe(iframeDomain);
 
+function detach() {
+  connection.detach();
+}
 
 // dynamic iframe load
 //
@@ -44,8 +49,20 @@ function attach(event) {
   loadPlugin(iframeDomain + "/appEnd/chromeIframe.html");
 }
 
-function detach() {
-  connection.detach();
+// Fire the test code.
+//
+function testConnection(connection) {
+    var win = connection.debuggr.promiseWindow();
+    Q.when(win, function resolved(win) {
+      console.log("Window as promised ", win);
+    }, function rejected(msgObj) {
+      console.error("Debugger.promiseResponse invalid message", msgObj);
+    });
+}
+function onMessage(event) {
+  if (event.data === 'go') {
+    testConnection(connection);
+  }
 }
 
 function onLoad() {
@@ -57,28 +74,11 @@ function onLoad() {
   
   // connect to the chromeIframe
   attach();
-};
+}
 
 // as soon as we load, setup the test
 //
 window.addEventListener('load', onLoad, false);
-
-function onMessage(event) {
-  if (event.data === 'go') {
-    testConnection(connection);
-  }
-}
-
-// Fire the test code.
-//
-function testConnection(connection) {
-    var win = connection.debuggr.promiseWindow();
-    Q.when(win, function resolved(win) {
-      console.log("Window as promised ", win);
-    }, function rejected(msgObj) {
-      console.error("Debugger.promiseResponse invalid message", msgObj);
-    });
-}
 
 </script>
 </head>
