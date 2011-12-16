@@ -3,7 +3,7 @@
 <title>crx2app: Orion plugin tester</title>
 <script src="../appEnd/proxyChromePipe.js"></script>
 <script src="../lib/q/q.js"></script>
-<script src="../test/Debugger.js"></script>
+<script src="../test/openWindowTest.js"></script>
 <script>
 
 // We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
@@ -41,7 +41,7 @@ function attach(event) {
   // dynamically load the chromeIframe, it will connect and fire the callback
   // (if we load the iframe statically, 
   // this outer load event will come *after* the iframe load event.)
-  loadPlugin(iframeDomain + "/test/chromeIframe.html");
+  loadPlugin(iframeDomain + "/appEnd/chromeIframe.html");
 }
 
 function detach() {
