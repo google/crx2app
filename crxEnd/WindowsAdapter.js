@@ -87,7 +87,7 @@ WindowsAdapter.prototype = {
   onRemoved: function(windowId) {
     this.barrier(windowId, arguments, function(windowId, index) {
       this.chromeWindowIds.splice(index, 1);
-      this.postMessage({source:this.getPath(), method:'onRemoved'});
+      this.postMessage({source:this.getPath(), method:'onRemoved', params:[]});
     });
   },
 

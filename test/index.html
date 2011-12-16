@@ -8,15 +8,13 @@ iframe {
   height: 80%;
 }
 </style>
-<script src="../appEnd/proxyChromePipe.js"></script>
-<script src="../lib/q/q.js"></script>
-<script src="../test/Debugger.js"></script>
 <script>
 
-var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+/*global console window */
 
-var connection = getChromeExtensionPipe(iframeDomain);
-
+function detach() {
+  console.log("Test page detach on unload");
+}
 
 // simulate loading plugin
 //
@@ -26,55 +24,48 @@ function loadPlugin(url) {
   iframe.setAttribute('src', url);
   var elt = document.getElementById('loadPluginsHere');
   elt.appendChild(iframe);
+  return iframe;
 }
 
 function attach(event) {
-  // listen for a connection.
-  connection.attach(function() {
-    connection.debuggr = new Debugger(connection);
-
-    // we have connected to the extension, release the button
-    var test = document.getElementById('test');
-    test.removeAttribute('disabled');
-    
-    console.log("Ready ");
-  });
-  
-  // fake-load a plugin, it will connect and fire the callback
-  // (if we load the iframe statically, 
-  // this outer load event will come *after* the iframe load event.)
-  loadPlugin(iframeDomain + "/test/plugin.html");
+  window.orionPlugin = loadPlugin("plugin.html");
 }
 
-function detach() {
-  connection.detach();
+function onMessage(event) {
+  console.log("Test page got "+event.data);
+  // release the button
+  var test = document.getElementById('test');
+  test.removeAttribute('disabled');
 }
 
 function onLoad() {
+  // clean up
   window.removeEventListener('load', onLoad, false);
+  
+  // listen for our plugin to be ready
+  window.addEventListener('message', onMessage, false);
+ 
+  // add the plugin
   attach();
-};
+}
+
+// Fire the test code.
+//
+function testConnection() {
+  window.orionPlugin.contentWindow.postMessage("go", "*");
+}
 
 // as soon as we load, setup the test
 //
 window.addEventListener('load', onLoad, false);
+window.addEventListener('click', testConnection, false);
 
-// Fire the test code.
-//
-function testConnection(connection) {
-    var win = connection.debuggr.promiseWindow();
-    Q.when(win, function resolved(win) {
-      console.log("Window as promised ", win);
-    }, function rejected(msgObj) {
-      console.error("Debugger.promiseResponse invalid message", msgObj);
-    });
-}
 
 </script>
 </head>
 <body>
 <h1>appEnd test</h1>
-<button id='test' disabled  onclick='testConnection(connection)'>Push To Test</button>
+<button id='test' disabled >Push To Test</button>
 <dl id='result'>
 </dl>
 <div id="loadPluginsHere">

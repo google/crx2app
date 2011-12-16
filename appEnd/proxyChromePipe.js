@@ -3,6 +3,9 @@
 
 /*global window console */
 
+// Listens for postMessage events and forwards them as if this was the chrome pipe
+// Can be loaded from an http URL
+// Should be connected to an iframeDomain in chrome-extension//
 
 // @return: connection object with attach/detach addListener/postMessage
 
@@ -10,7 +13,8 @@ function getChromeExtensionPipe(iframeDomain){
 
   var proxyEnd = {
 
-    // call this method before the iframe can load
+    // call this method before the chromeIframe can load
+    // so we can be listening for its introduction message.
     // do not call postMessage until the callback fires.
     attach: function(callback) {
       this.onIntroduction = this.onAttach.bind(this, callback);
@@ -56,7 +60,9 @@ function getChromeExtensionPipe(iframeDomain){
     
     fromExtnToApp: function(event) {
       if (this.listener) {
-        this.listener(event.data);
+        if (event.origin === iframeDomain) {
+          this.listener(event.data);
+        } // else not for us
       } // else no listener
     },
 

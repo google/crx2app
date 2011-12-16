@@ -1,34 +1,90 @@
 <html>
 <head>
-<script src="../appEnd/appEnd.js"></script>
-<script src="../appEnd/ProxyPoster.js"></script>
+<title>crx2app: Orion plugin tester</title>
+<script src="../appEnd/proxyChromePipe.js"></script>
+<script src="../lib/q/q.js"></script>
+<script src="../test/Debugger.js"></script>
 <script>
 
-function onLoad() {
-  
-  // The window.parent must listen for 'message' before allowing this iframe to reach 'load'
-  
-  var connection = getChromeExtensionPipe();
-  connection.attach(function() {
-  
-    // We have reached load in this iframe and we have connected to chrome
-  
-    // Send messages between chrome and window.parent
-    var proxyPoster = new ProxyPoster(connection);
-    proxyPoster.attach();
+// We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
 
-    // prepare for unload
-    window.onbeforeunload = function() {
-      proxyPoster.detach();
-    };
-  });
+var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+
+var connection = getChromeExtensionPipe(iframeDomain);
+
+
+// simulate loading plugin
+//
+function loadPlugin(url) {
+  var iframe = document.createElement('iframe');
+  iframe.addEventListener('unload', detach, false);
+  iframe.setAttribute('src', url);
+  var elt = document.getElementById('loadChromeIframe');
+  elt.appendChild(iframe);
 }
 
+function attach(event) {
+  // listen for a connection.
+  connection.attach(function() {
+    
+    // connected to chrome
+    
+    // setup debugger
+    connection.debuggr = new Debugger(connection);
+
+    // we have connected to the extension, plugin to Orion
+    window.parent.postMessage("Ready for Orion", "*");
+    
+    console.log("Plugin Ready ");
+  });
+  
+  // dynamically load the chromeIframe, it will connect and fire the callback
+  // (if we load the iframe statically, 
+  // this outer load event will come *after* the iframe load event.)
+  loadPlugin(iframeDomain + "/test/chromeIframe.html");
+}
+
+function detach() {
+  connection.detach();
+}
+
+function onLoad() {
+  // clean up
+  window.removeEventListener('load', onLoad, false);
+  
+  // listen for fake-Orion to tell us to do something
+  window.addEventListener('message', onMessage, false);
+  
+  // connect to the chromeIframe
+  attach();
+};
+
+// as soon as we load, setup the test
+//
 window.addEventListener('load', onLoad, false);
+
+function onMessage(event) {
+  if (event.data === 'go') {
+    testConnection(connection);
+  }
+}
+
+// Fire the test code.
+//
+function testConnection(connection) {
+    var win = connection.debuggr.promiseWindow();
+    Q.when(win, function resolved(win) {
+      console.log("Window as promised ", win);
+    }, function rejected(msgObj) {
+      console.error("Debugger.promiseResponse invalid message", msgObj);
+    });
+}
 
 </script>
 </head>
 <body>
-<p>chrome extension iframe</p>
+<h1>Orion plugin test iframe</h1>
+<div id="loadChromeIframe">
+</div>
 </body>
 </html>

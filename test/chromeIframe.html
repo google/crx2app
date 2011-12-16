@@ -1,0 +1,34 @@
+<html>
+<head>
+<script src="../appEnd/appEnd.js"></script>
+<script src="../appEnd/ProxyPoster.js"></script>
+<script>
+
+function onLoad() {
+  
+  // The window.parent must listen for 'message' before allowing this iframe to reach 'load'
+  
+  var connection = getChromeExtensionPipe();
+  connection.attach(function() {
+  
+    // We have reached load in this iframe and we have connected to chrome
+  
+    // Send messages between chrome and window.parent
+    var proxyPoster = new ProxyPoster(connection);
+    proxyPoster.attach();
+
+    // prepare for unload
+    window.onbeforeunload = function() {
+      proxyPoster.detach();
+    };
+  });
+}
+
+window.addEventListener('load', onLoad, false);
+
+</script>
+</head>
+<body>
+<p>chrome extension iframe</p>
+</body>
+</html>
