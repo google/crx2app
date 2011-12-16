@@ -1,0 +1,83 @@
+<html>
+<head>
+<title>crx2app Barrier Proxy Test Page Wrapper</title>
+<style>
+iframe {
+  padding: 50px;
+  width: 80%;
+  height: 80%;
+}
+</style>
+<script src="../appEnd/proxyChromePipe.js"></script>
+<script src="../lib/q/q.js"></script>
+<script src="../appEnd/Debugger.js"></script>
+<script>
+
+var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+
+var connection = getChromeExtensionPipe(iframeDomain);
+
+
+// simulate loading plugin
+//
+function loadPlugin(url) {
+  var iframe = document.createElement('iframe');
+  iframe.addEventListener('unload', detach, false);
+  iframe.setAttribute('src', url);
+  var elt = document.getElementById('loadPluginsHere');
+  elt.appendChild(iframe);
+}
+
+function attach(event) {
+  // listen for a connection.
+  connection.attach(function() {
+    connection.debuggr = new Debugger(connection);
+
+    // we have connected to the extension, release the button
+    var test = document.getElementById('test');
+    test.removeAttribute('disabled');
+    
+    console.log("Ready ");
+  });
+  
+  // fake-load a plugin, it will connect and fire the callback
+  // (if we load the iframe statically, 
+  // this outer load event will come *after* the iframe load event.)
+  loadPlugin(iframeDomain + "/test/plugin.html");
+}
+
+function detach() {
+  connection.detach();
+}
+
+function onLoad() {
+  window.removeEventListener('load', onLoad, false);
+  attach();
+};
+
+// as soon as we load, setup the test
+//
+window.addEventListener('load', onLoad, false);
+
+// Fire the test code.
+//
+function testConnection(connection) {
+    var win = connection.debuggr.promiseWindow();
+    Q.when(win, function resolved(win) {
+      console.log("Window as promised ", win);
+    }, function rejected(msgObj) {
+      console.error("Debugger.promiseResponse invalid message", msgObj);
+    });
+}
+
+</script>
+</head>
+<body>
+<h1>appEnd test</h1>
+<button id='test' disabled  onclick='testConnection(connection)'>Push To Test</button>
+<dl id='result'>
+</dl>
+<div id="loadPluginsHere">
+</div>
+</body>
+</html>

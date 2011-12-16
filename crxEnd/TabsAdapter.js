@@ -62,7 +62,7 @@ TabsAdapter.prototype = {
   },
   
   putUpInfobar: function(tabId) {
-      var details = {tabId: tabId, path: "warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
+      var details = {tabId: tabId, path: "crxEnd/warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
       console.log("putUpInfoBar ready", details);
       chrome.experimental.infobars.show(details, function(win){
         console.log("putUpInfobar done", win);

@@ -15,6 +15,7 @@ function getChromeExtensionPipe(iframeDomain){
     attach: function(callback) {
       this.onIntroduction = this.onAttach.bind(this, callback);
       window.addEventListener('message', this.onIntroduction, false);
+      console.log("proxyChromePipe awaiting introduction from "+iframeDomain);
     },
 
     detach: function() {
@@ -24,6 +25,7 @@ function getChromeExtensionPipe(iframeDomain){
     // Get the assigned name of the port and connect to it
     //
     onAttach: function(callback, event) {
+      console.log("proxyChromePipe onAttach called by "+event.origin);
       if (event.origin === iframeDomain) {
         // Remember our partner
         this.source = event.source; 
