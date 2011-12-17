@@ -29,8 +29,15 @@ function getChromeExtensionPipe(){
     // Get the assigned name of the port and connect to it
     //
     onAttach: function(callback, response) {
+      if (response.error) {
+        var msg = response.error+": "+response.origin;
+        msg += "\n Check cxr2app options in Chrome's Extension page";
+        alert(msg);
+        return;
+      }
       if (!response.name) {
         console.error("crx2App the extension must send .name in response", response);
+        return;
       }
     
       this.name = response.name;

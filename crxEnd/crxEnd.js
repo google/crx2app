@@ -1,7 +1,7 @@
 // See Purple/license.txt for Google BSD license
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
-/*global console*/
+/*global console ensureOrigin restoreOptions getChromeExtensionPipe*/
 
 /*
   Chrome extension end of crx2app communications
@@ -38,6 +38,15 @@ var crxEnd = {
     this.adapterFactory['chrome.tabs']._disconnect();
   },
   
+  isOriginAllowed: function(origin) {
+    var options = restoreOptions();
+    if (options) {
+      if (options.origins) {
+        return options.origins.indexOf(origin) + 1;
+      }
+    }
+  },
+  
   getWindowsAdaptersByOrigin: function(origin) {
     var windowsAdapter;
     Object.keys(this.windowsAdaptersByName).forEach(function(name) {
@@ -46,10 +55,13 @@ var crxEnd = {
       }
     }, this);
     
-    if (!windowsAdapter) {  // then we need to create one for this origin
-      this.chromeAdapters = this.adapterFactory(origin);
-      windowsAdapter = this.chromeAdapters['chrome.windows'];
-      this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
+    if (!windowsAdapter) {  // then this origin has not been seen
+      if (this.isOriginAllowed(origin)) {
+        // then we need to create one for this origin
+        this.chromeAdapters = this.adapterFactory(origin);
+        windowsAdapter = this.chromeAdapters['chrome.windows'];
+        this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
+      } // else no adapter for you
     } else {                
       // we can reuse the existing adapter
       delete this.windowsAdaptersByName[windowsAdapter.name]; // after disassociating it from our list,
@@ -64,20 +76,25 @@ var crxEnd = {
     // Do I know you?
     if (sender.tab && request.name === getChromeExtensionPipe.NAME) {
       
-      var origin = this.getOrigin(sender.tab.url);
-      var windowsAdapter = this.getWindowsAdaptersByOrigin(origin);
+      var origin = ensureOrigin(sender.tab.url);
+      if (origin) {
+        var windowsAdapter = this.getWindowsAdaptersByOrigin(origin);
+        if (windowsAdapter) {
       
-      // prepare for connection
-      if ( !chrome.extension.onConnect.hasListener(this.onConnect) ) {
-        chrome.extension.onConnect.addListener(this.onConnect);
-      }
-      
-      // give the proxy it's name, ending our introduction
-      sendResponse({name: windowsAdapter.name});
-      
-    } else {
-      sendResponse(undefined);
-    }
+          // prepare for connection
+          if ( !chrome.extension.onConnect.hasListener(this.onConnect) ) {
+            chrome.extension.onConnect.addListener(this.onConnect);
+          }
+        
+          // give the proxy it's name, ending our introduction
+          sendResponse({name: windowsAdapter.name});
+          return;
+        } // else not allowed to use us
+      } // else not valid url origin
+      sendResponse({error: "Web Origin Not Allowed", url: sender.tab.url, origin: origin});
+    } // else not our caller
+    sendResponse(undefined);
+    return;
   },
   
   // When the app connects its port has the name we gave it.

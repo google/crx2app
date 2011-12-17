@@ -1,0 +1,273 @@
+<html>
+<head><title>crx2app Chrome Extension Options</title>
+
+<script type="text/javascript" src="ensureOrigin.js"></script>
+<script type="text/javascript" src="saveRestoreOptions.js"></script>
+<script type="text/javascript">
+
+/*global console window*/
+
+function restore() {
+  var options = restoreOptions();
+  if (options) {
+    var origins = options.origins;
+    if (origins && origins instanceof Array) {
+      origins.forEach(addRow);
+    } 
+  }
+  // the default UI will work for no-options-set-yet
+}
+
+
+function cloneElementById(id) {
+  var template = document.getElementById(id);
+  var elt = template.cloneNode(true);
+  elt.removeAttribute('id');
+  template.parentNode.insertBefore(elt, template);
+  return elt;
+}
+
+function createRow() {
+  return cloneElementById('templateRow');
+}
+
+function addRow(origin) {
+  origin = ensureOrigin(origin);
+  var row = createRow();
+  var input = row.getElementsByClassName('origin')[0];
+  input.value = origin;
+}
+
+// From editing to previewing
+function preview(row) {
+  var originElt = row.getElementsByClassName('origin')[0];
+  var maybeOrigin = originElt.value;
+  var origin = ensureOrigin(maybeOrigin);
+  originElt.value = origin;
+
+  if (origin) {
+    // open an iframe and preview the origin as a URI
+    var previewRow = cloneElementById('previewRow');
+    previewRow.parentNode.removeChild(previewRow);
+    row.parentNode.insertBefore(previewRow, row.nextSibling);
+    var iframe = previewRow.getElementsByTagName('iframe')[0];
+    iframe.setAttribute('src', origin);
+  
+    // convert the UI to reflect statePreviewing
+    originElt.setAttribute('disabled', 'disabled');
+    row.classList.remove('stateEditing');
+    row.classList.add('statePreviewing');
+  } // else stay in editing
+}
+
+function unpreview(row) {
+  // Take out the row with the preview iframe
+  row.parentElement.removeChild(row.nextSibling);
+  
+  row.classList.remove('statePreviewing');
+  row.classList.add('stateSaved');
+}
+
+// From previewing to saved
+function save(row) {
+  saveOptions();
+  console.log('save', row);
+  unpreview(row);
+}
+
+// From saved to editing
+function edit(row) {
+  var origin = row.getElementsByClassName('origin')[0];
+  origin.removeAttribute('disabled');
+  row.classList.remove('stateSaved');
+  row.classList.add('stateEditing');
+}
+
+var rowTransitions = {
+  'stateEditing': preview,
+  'statePreviewing': save,
+  'stateSaved': edit
+};
+
+function getRow(event) {
+  var action = event.target;
+  var row = action;
+  while (row.localName !== 'tr') {
+    row = row.parentElement;
+    if (!row) {
+      return; // FAIL
+    }
+  }
+  return row;
+}
+
+function changeState(event) {
+  console.log("changeState", event);
+  var row = getRow(event);
+  if (row) {
+    var state = row.classList[0];
+    rowTransitions[state](row);
+  }
+}
+
+function revertState(event) {
+  var row = getRow(event);
+  if (row) {
+    var state = row.classList[0];
+    if (state === 'stateEditing') {
+      row.parentElement.removeChild(row);
+      saveOptions();
+    } else if (state === 'statePreviewing') {
+      unpreview(row);
+      edit(row);
+    } else if (state === 'stateSaved') {
+      row.parentElement.removeChild(row);
+      saveOptions();
+    }
+  }
+}
+
+function onAddRow(event) {
+  edit(createRow());
+}
+
+function highlightSave(event) {
+  var save = document.getElementById("save");
+  save.classList.add('youShouldSave');
+  status.innerHTML = "";
+}
+
+function addListeners() {
+  var addRow = document.getElementById('addRow');
+  addRow.addEventListener('click', onAddRow, false);
+}
+
+function onLoad() {
+  restore();
+  addListeners();
+}
+window.addEventListener('load', onLoad, false);
+
+window.onbeforeunload = function(event) {
+  var previewings = document.getElementsByClassName('statePreviewing');
+  var editings = document.getElementsByClassName('stateEditing');
+  
+  if ( (previewings.length > 0) ||
+       (editings.length > 0) ) {
+     event.returnValue = "You have unsaved edits";
+     return event.returnValue;
+  }
+};
+
+</script>
+<style>
+body {
+  font-family:Verdana,Geneva,sans-serif;
+  background:  #FFFFC8;
+}
+
+.youShouldSave {
+  color: red;
+  font-weight: bold;
+  padding: 10px;
+}
+.warning {
+  border: 4px solid gray;
+  padding: 5px;
+  margin: 4px;
+}
+.tableSurround {
+  margin: 10px;
+  padding: 10px;
+}
+#origins iframe {
+  width: 100%;
+}
+#previewRow {
+  display: none;
+}
+#templateRow {
+  visibility: hidden;
+}
+.edit {
+  display: none;
+}
+.preview {
+  display: none;
+}
+.save {
+  display: none;
+}
+.stateEditing .preview {
+  display: inline;
+}
+.statePreviewing .save {
+  display: inline;
+}
+.stateSaved .edit {
+  display: inline;
+}
+.remove {
+  display: none;
+}
+.cancel {
+  display: none;
+}
+.stateEditing .remove {
+  display: inline;
+}
+.statePreviewing .cancel {
+  display: inline;
+}
+.stateSaved .remove {
+  display: inline
+}
+</style>
+</head>
+<body>
+
+<h2>Web Origins Allowed to Control Your Browser</h2> 
+<b class='warning'>
+Warning: the Web sites you add in the table below will have some powers of Chrome extensions.
+</b>
+
+<div class="tableSurround">
+<table id="origins">
+<tbody>
+  <tr>
+    <th>Action</th><th>Allowed Origin</th>
+  </tr>
+  <tr id="templateRow" class="stateSaved"><!-- Don't use any ids in this element -->
+    <td>
+      <button class="action" onclick="changeState(event);"> <!-- only one of these states will be visible at any time -->
+        <span class='edit'>Edit</span><!-- stateSaved, to go stateEditing -->
+        <span class='preview'>Preview</span><!-- stateEditing, go to statePreviewing -->
+        <span class='save'>Save</span> <!-- statePreviewing, go to stateSaved -->
+      </button>
+    </td>
+    <td>
+      <input class="origin" type="url" size="80" disabled='disabled' />
+    </td>
+    <td>
+      <button class="action" onclick="revertState(event);"> <!-- only one of these states will be visible at any time -->
+        <span class='remove'>Remove</span><!-- stateSaved, delete; stateEditing, go to statePreviewing -->
+        <span class='cancel'>Cancel</span> <!-- statePreviewing, go to stateEditing -->
+      </button>
+    </td>
+  </tr>
+  <tr>
+    <td id="addRow" colspan="3"><button>Add Allowed Origin</button><span> You may enter URLs, they will be shortened to origins</span></td>
+  </tr>
+  <tr  id="previewRow">
+    <td colspan="3">
+      <a name="preview">
+        <iframe class="previewFrame" src="about:blank"></iframe>
+      </a>
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+</body>
+</html>

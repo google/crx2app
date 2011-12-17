@@ -15,6 +15,7 @@
       "contextMenus",
       "webNavigation"
     ],
+  "options_page": "crxEnd/options.html",
   "icons":
     {
       "16" : "orion16.png"

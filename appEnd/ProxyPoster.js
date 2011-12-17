@@ -5,6 +5,7 @@
 
 // http://dev.w3.org/html5/postmsg/  postMessage()  
  
+// Pumps messages from the chromeIframe up to the enclosing window
 
 // @param attachment: {attach: function, postMessage: function, addListener: function, detach: function()}
 // @param handShake string expected/echoed by otherWindow
