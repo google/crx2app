@@ -33,18 +33,29 @@ function attach(event) {
 
 // Fire the test code.
 //
-function testConnection() {
+function testOpenWindow() {
   window.openWindowPlugin.contentWindow.postMessage("go", "*");
+}
+
+function testDebugger() {
+  window.jsDebuggerPlugin.contentWindow.postMessage("go", "*");
 }
 
 function onMessage(event) {
   console.log("Test page got "+event.data);
 
-  var test = document.getElementById('test');
+  var openWindowTest = document.getElementById('openWindowTest');
   // listen for user clicks
-  test.addEventListener('click', testConnection, false);
+  openWindowTest.addEventListener('click', testOpenWindow, false);
   // release the button
-  test.removeAttribute('disabled');
+  openWindowTest.removeAttribute('disabled');
+
+  var debuggerTest = document.getElementById('debuggerTest');
+  // listen for user clicks
+  debuggerTest.addEventListener('click', testDebugger, false);
+  // release the button
+  debuggerTest.removeAttribute('disabled');
+
 }
 
 function onLoad() {
@@ -66,7 +77,8 @@ window.addEventListener('load', onLoad, false);
 </head>
 <body>
 <h1>appEnd test</h1>
-<button id='test' disabled >Push To Test</button>
+<button id='openWindowTest' disabled >Push To Test Open Window</button>
+<button id='debuggerTest' disabled >Push To Test Debugger</button>
 <dl id='result'>
 </dl>
 <div id="loadPluginsHere">

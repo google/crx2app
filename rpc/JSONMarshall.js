@@ -3,7 +3,7 @@
 
 /*globals define console*/
 
-define(['browser/remote', 'lib/q/q'], function (remote, Q) {
+define(['lib/q/q'], function (Q) {
   
   // A left paren ( followed by any not-right paren ) followed by right paren
   var reParamList = /\(([^\)]*)\)/; 
@@ -48,7 +48,7 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
       var message = {method: domain+'.'+method,  params: params, cmd_id: commandCounter++};
       // store the deferred for recvResponseData
       var deferred = deferredById[message.cmd_id] = Q.defer();
-      channel.send(message);
+      channel.postMessage(message);
       // callers can wait on the promise to be resolved by recvResponseData
       return deferred.promise; 
     };
@@ -66,10 +66,10 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
   }
   
   //---------------------------------------------------------------------------------------------
-  var RemoteByWebInspector = {};
+  var JSONMarshall = {};
 
 
-  RemoteByWebInspector.recvEvent = function(p_id, data) {
+  JSONMarshall.recvEvent = function(p_id, data) {
     // {source: "debugger", name: "response", result: result, request: request}
     if (data && data.source && data.name) {
       if (data.name !== 'response') {
@@ -78,11 +78,11 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
     }
   };
 
-  RemoteByWebInspector.recvEventData = function(p_id, data) {
+  JSONMarshall.recvEventData = function(p_id, data) {
     return this.categorize(p_id, data, this.applyToparsedJSON);
   };
 
-  RemoteByWebInspector.categorize = function(p_id, data, thenFnOfIdDataMethod) {
+  JSONMarshall.categorize = function(p_id, data, thenFnOfIdDataMethod) {
     var splits = data.name.split('.');
     var category = splits[0];
     var methodName = splits[1];
@@ -95,7 +95,7 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
     }
   };
   
-  RemoteByWebInspector.applyToparsedJSON = function(p_id, data, method) {
+  JSONMarshall.applyToparsedJSON = function(p_id, data, method) {
     try {
       var objFromJSON = data.params;
       if (typeof(objFromJSON) === 'string') {
@@ -103,11 +103,11 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
       }
       return method.apply(null, [objFromJSON, p_id]);
     } catch(exc) {
-      console.error("RemoteByWebInspector ERROR "+exc, exc.stack, data.params);
+      console.error("JSONMarshall ERROR "+exc, exc.stack, data.params);
     }
   };
   
-  RemoteByWebInspector.recvResponse = function(p_id, data) {
+  JSONMarshall.recvResponse = function(p_id, data) {
     // {source: "debugger", name: "response", result: result, request: request}
     if (data && data.source && data.name) {
       if (data.name === 'response') {
@@ -117,7 +117,7 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
   };
   
   
-  RemoteByWebInspector.recvResponseData = function(p_id, data) {
+  JSONMarshall.recvResponseData = function(p_id, data) {
     var cmd_id = data.request.cmd_id; // set by sendRemoteCommand
     var deferred = deferredById[cmd_id];
     if (deferred) {
@@ -137,11 +137,11 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
   };
   
   
-  RemoteByWebInspector._addHandlers = function(indexer) {
+  JSONMarshall.addHandlers = function(iface, indexer) {
     this.jsonHandlers = {}; // by domain and function name
     var responseHandlerObject = indexer.responseHandlers;  // {Debugger:{functions}, Console:{functions}}
     var remoteImpl = this;
-    var events = remote.getEvents();
+    var events = iface.events;
     var domainNames = Object.keys(events);
     domainNames.forEach(function buildDomainResponse(domainName) {
       remoteImpl.jsonHandlers[domainName] = {};
@@ -154,9 +154,9 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
         }
         var handler = handlersByDomain[handlerName];  // implementation function of
         if (!handler) {
-          console.trace("RemoteByWebInspector");
-          console.error("RemoteByWebInspector, no handler for "+domainName+"."+handlerName, RemoteByWebInspector);
-          throw new Error("RemoteByWebInspector, no handler for "+domainName+"."+handlerName);
+          console.trace("JSONMarshall");
+          console.error("JSONMarshall, no handler for "+domainName+"."+handlerName, JSONMarshall);
+          throw new Error("JSONMarshall, no handler for "+domainName+"."+handlerName);
         }
         var m = reParameters.exec(handlerSpec.toString());
         var params = m[1].split(',');
@@ -172,21 +172,21 @@ define(['browser/remote', 'lib/q/q'], function (remote, Q) {
     });
   };
   
-    // Walk the remote API and implement each function to send over channel.
-  RemoteByWebInspector.buildImplementation = function(remoteByWebInspector, channel) {
-    var api = remote.getAPI();
+    // Walk the API and implement each function to send over channel.
+  JSONMarshall.buildImplementation = function(iface, impl, channel) {
+    var api = iface.api;
     var domains = Object.keys(api);
     domains.forEach(function buildSend(domain) {
-      remoteByWebInspector[domain] = {};
+      impl[domain] = {};
       var methods = Object.keys(api[domain]);
       methods.forEach(function buildMethod(method) {
         var paramNames = getParamsFromAPI(api[domain][method]);
         // each RHS is a function returning a promise
-        remoteByWebInspector[domain][method] = makeSendRemoteCommand(channel, domain, method, paramNames);
+        impl[domain][method] = makeSendRemoteCommand(channel, domain, method, paramNames);
       });
     });
   };
 
-  return RemoteByWebInspector;
+  return JSONMarshall;
 
 });

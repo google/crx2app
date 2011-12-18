@@ -5,14 +5,14 @@
 <script src="../lib/q/q.js"></script>
 <script src="../lib/requirejs/require.js"></script>
 <script>
-/*global getChromeExtensionPipe window console Q require */
+
+/*globals getChromeExtensionPipe window console Q require */
 
 // We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
 
 var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
 
 var connection = getChromeExtensionPipe(iframeDomain);
-
 
 // dynamic iframe load
 //
@@ -24,12 +24,12 @@ function loadPlugin(url) {
 }
 
 function attach(event) {
+
   // listen for a connection.
-  connection.attach(function() {
+  connection.attach(function onConnectedToChrome() {
     
-    // connected to chrome
-    
-    // we have connected to the extension, plugin to Orion
+    // we have connected to the extension, so plugin to Orion.
+    // The test driver just responds 'go' for our 'Ready' 
     window.parent.postMessage("Ready for Orion", "*");
     
     console.log("Plugin Ready ");
@@ -47,21 +47,24 @@ function detach() {
 
 // Fire the test code.
 //
-function testConnection(connection) {
-    var win = connection.debuggr.promiseWindow();
-    Q.when(win, function resolved(win) {
-      console.log("Window as promised ", win);
+function testConnection(jsDebugger) {
+    var promisedDebugger = jsDebugger.promiseStartDebugger();
+    Q.when(promisedDebugger, function resolved(promisedDebugger) {
+      console.log("Debugger as promised ", promisedDebugger);
     }, function rejected(msgObj) {
-      console.error("Debugger.promiseResponse invalid message", msgObj);
+      console.error("Invalid message", msgObj);
     });
 }
 
 function onMessage(event) {
+
+  // Mock Orion calls back
   if (event.data === 'go') {
+  
     // dynamically load the debugger code
     require({
       paths: {
-        "browser/remote": "remote",
+        "browser/remote": "rpc",
         "lib/q":          "../lib/q"
       }
     }); 
@@ -72,7 +75,7 @@ function onMessage(event) {
 
    require(['jsDebugger'], function testIt(jsDebugger) {
       jsDebugger.connect(connection);
-      testConnection(connection);
+      testConnection(jsDebugger);
     });
   }
 }
@@ -86,7 +89,7 @@ function onLoad() {
   
   // connect to the chromeIframe
   attach();
-};
+}
 
 // as soon as we load, setup the test
 //

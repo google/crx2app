@@ -1,9 +1,13 @@
+// Google BSD license http://code.google.com/google_bsd_license.html
+// Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global console*/
 
+// This is a JSON-level test driver
+
 // @param return from appEnd getChromeExtensionPipe()
 
-function Debugger(connection) {
+function OpenWindowTest(connection) {
   this.connection = connection;
 }
 
@@ -12,13 +16,13 @@ function getRejection(msgObj) {
   var props = ['source', 'method', 'params', 'serial'];
   props.forEach(function(prop) {
     if (!reason && !msgObj[prop]) {
-      reason = {from: "Debugger", reason: "No "+prop, msgObj: msgObj};
+      reason = {from: "OpenWindowTest", reason: "No "+prop, msgObj: msgObj};
     }
   });
   return reason;
 }
 
-Debugger.prototype = {
+OpenWindowTest.prototype = {
   
   send: function(target, method, params, serial) {
     this.connection.postMessage({target: target, method: method, params: params, serial: serial});
@@ -38,7 +42,7 @@ Debugger.prototype = {
         
         deferred.resolve(msgObj.params);
       } else {
-        console.log("Debugger.promiseResponse ignoring filtered message", msgObj);
+        console.log("OpenWindowTest.promiseResponse ignoring filtered message", msgObj);
       }
     }
   },
@@ -60,8 +64,8 @@ Debugger.prototype = {
 };
 
 // Debugging 
-var _send = Debugger.prototype.send; 
-Debugger.prototype.send = function() {
+var _send = OpenWindowTest.prototype.send; 
+OpenWindowTest.prototype.send = function() {
   if ( typeof arguments[0] !== 'string' ) {
     throw new Error("First argument must be a string");
   }
@@ -74,6 +78,6 @@ Debugger.prototype.send = function() {
   if ( typeof arguments[3] !== 'number' ) {
     throw new Error("Fourth argument must be a number");
   }
-  console.log("Debugger send", this, arguments);
+  console.log("OpenWindowTest send", this, arguments);
   return _send.apply(this, arguments);
 };

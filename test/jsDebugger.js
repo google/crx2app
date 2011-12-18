@@ -2,9 +2,9 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-
-define(  ['remoteByWebInspector'], 
-function ( remoteByWebInspector) {
+console.log('jsDebugger.js loaded');
+define(  ['../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
+  function(JSONMarshall, remote, chrome) {
   
   var jsDebugger = {};
   
@@ -17,9 +17,9 @@ function ( remoteByWebInspector) {
   jsDebugger.stopDebugger = function() {
     this.remote.Debugger.disable();
   };
-  
+    
   // Implement Remote.events
-  jsDebugger.responseHandlers = {
+  jsDebugger.remoteResponseHandlers = {
     Debugger: {
         breakpointResolved: function(breakpointId, location) {
           console.log("JavaScriptEventHandler", arguments);
@@ -49,20 +49,28 @@ function ( remoteByWebInspector) {
         }
       }
   };
+  jsDebugger.chromeResponseHandlers = {
+    
+  };
   
   //---------------------------------------------------------------------------------------------
   
   jsDebugger.connect = function(channel) {
-      this.remote = Object.create(remoteByWebInspector);
-      this.remote._addHandlers(this);
-      this.remote.buildImplementation(this, channel);
+      this.remote = Object.create(JSONMarshall);
+      this.remote.responseHandlers = this.remoteResponseHandlers;
+      this.remote.addHandlers(remote, this.remote);
+      this.remote.buildImplementation(remote, this.remote, channel);
       
-	  return this.promiseStartDebugger();
+      this.chrome = Object.create(JSONMarshall);
+      this.chrome.responseHandlers = this.chromeResponseHandlers;
+      this.chrome.addHandlers(chrome, this.chrome);
+      this.chrome.buildImplementation(chrome, this.chrome, channel);
   };
   
   jsDebugger.disconnect = function(channel) {
       this.stopDebugger();
       this.remote.disconnect(channel);
+      this.chrome.disconnect(channel);
   };
 
   return jsDebugger;

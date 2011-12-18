@@ -6,7 +6,7 @@
 <script src="../test/openWindowTest.js"></script>
 <script>
 
-/*global getChromeExtensionPipe Debugger window Q console*/
+/*global getChromeExtensionPipe OpenWindowTest window Q console*/
 
 // We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
 
@@ -34,8 +34,8 @@ function attach(event) {
     
     // connected to chrome
     
-    // setup debugger
-    connection.debuggr = new Debugger(connection);
+    // setup OpenWindowTest
+    window.openWindowTest = new OpenWindowTest(connection);
 
     // we have connected to the extension, plugin to Orion
     window.parent.postMessage("Ready for Orion", "*");
@@ -52,11 +52,11 @@ function attach(event) {
 // Fire the test code.
 //
 function testConnection(connection) {
-    var win = connection.debuggr.promiseWindow();
+    var win = window.openWindowTest.promiseWindow();
     Q.when(win, function resolved(win) {
       console.log("Window as promised ", win);
     }, function rejected(msgObj) {
-      console.error("Debugger.promiseResponse invalid message", msgObj);
+      console.error("OpenWindowTest.promiseResponse invalid message", msgObj);
     });
 }
 function onMessage(event) {
