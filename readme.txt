@@ -2,15 +2,26 @@ crx2app A Barrier Proxy giving Web app limited access to Chrome Browser extensio
 
 Install
   One of these two:
-    start chrome browser on the command line with --enable-experimental-extension-apis
-    use URL chrome://flags/, find "Experimental Extension APIs", enable, restart
-  clone this reprository
-  Use URL chrome://extensions, set developer mode, load unpacked extension, navigate to the clone
-    the crx2app extension should be loaded
+    A) start chrome browser on the command line with --enable-experimental-extension-apis
+     OR
+    B) use URL chrome://flags/, find "Experimental Extension APIs", enable, restart
+  
+  Clone this reprository
+  
+  Use URL chrome://extensions, 
+    set developer mode, 
+    load unpacked extension, 
+    navigate to the clone, 
+    open it
+    ==> the crx2app extension should be loaded
     
 Test page
       
-  Use chrome://extensions > crx2app options link, add the URL (origin part) of your web server
+  Open chrome://extensions 
+    Find extension crx2app
+    Click "options" link, 
+      ==> You should see a yellow page
+    add the URL (origin part) of your web server
   Open test/index.html in chrome.
   
 Using Orion
@@ -21,6 +32,7 @@ Using Orion
 Directories
   crxEnd/ chrome side of proxy, use the chromeIframe.html as serc in your web page
   appEnd/ app side of proxy, include these files in your web page
-  remote/ marshalling/dispatch code for appEnd use
+  rpc/ marshalling/dispatch code for appEnd use
+  lib/ q.js and require.js used in rpc/ and demos
   test/ demo app
   
