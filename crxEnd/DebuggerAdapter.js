@@ -10,18 +10,15 @@
   @param send function(JSONable object) to forward to app
 */
 
-function makeDebuggerAdapter(chrome, PostSource) {
+function makeDebuggerAdapter(chrome, PostSource, remote) {
 
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
   this.debuggeeTabIds = [];
   this.port = windowsAdapter.port;
   this._bindListeners();
-  this.api = ['attach', 'sendCommand', 'detach'];
+  this._buildAPI(remote);
 }
-
-var dTemp = chrome.experimental.debugger;
-var chrome = {experimental: {'debugger':dTemp}}; 
 
 DebuggerAdapter.path = 'chrome.debugger';
 
@@ -37,25 +34,25 @@ DebuggerAdapter.prototype = {
     this.debuggeeTabIds.push(debuggee.tabId);
     
     // prepare for events from chrome.debugger
-    chrome.debugger.onEvent.addListener(this.onEvent);
+    chrome.experimental.debugger.onEvent.addListener(this.onEvent);
     
     // Setup the connection to the devtools backend
-    chrome.debugger.attach({tabId: debuggee.tabId}, version, this.noErrorPosted);
+    chrome.experimental.debugger.attach({tabId: debuggee.tabId}, version, this.noErrorPosted);
     
     // detach if the tab is removed
     chrome.tabs.onRemoved.addListener(this.onRemoved);
   },
     
-  sendCommand: function(debuggee, method, params) {
+  sendCommand: function(method, serial, debuggee, params) {
     if (!this._checkDebuggee(debuggee)) {
       return;
     }
     
-    chrome.experiment.debugger.sendCommand(
-      {tabId: debuggee.tabId},
+    chrome.experimental.debugger.sendCommand(
+      { tabId: debuggee.tabId },
       method,
       params,
-      this.onResponse.bind(this, method, params)
+      this.onResponse.bind(this, serial, method, params)
     );
   },
   
@@ -63,9 +60,9 @@ DebuggerAdapter.prototype = {
     if (!this._checkDebuggee(debuggee)) {
       return;
     }
-    chrome.debugger.onEvent.removeListener(this.onEvent);    
+    chrome.experimental.debugger.onEvent.removeListener(this.onEvent);    
     
-    chrome.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
+    chrome.experimental.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
     var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
     if (index > -1) {
       this.debuggeeTabIds.splice(index, 1);
@@ -85,10 +82,10 @@ DebuggerAdapter.prototype = {
   },
   
   // Forward command responses from Chrome to App
-  onResponse: function(method, params, result) {
+  onResponse: function(serial, method, params, result) {
     if (!this.noErrorPosted()) {
       var request = {method: method, params: params};
-      this.postMessage({source: this.getPath(), method: "OnResponse", params: [result], request: request});
+      this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [result], request: request});
     } 
   },
   
@@ -101,7 +98,7 @@ DebuggerAdapter.prototype = {
   
   // The debuggee tab was removed
   onRemoved: function(tabId, removeInfo) {
-    var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
+    var index = this.debuggeeTabIds.indexOf(tabId);
     if (index > -1) {
       this.detach({tabId: tabId});
     } // else not ours
@@ -121,6 +118,21 @@ DebuggerAdapter.prototype = {
     // onResponse bound for each call
     this.onDetach = this.onDetach.bind(this);
     this.onRemoved = this.onRemoved.bind(this);
+  },
+  
+  _buildAPI: function(remote) {
+    this.api = [];
+    this.chromeWrappers = {};
+    var domains = Object.keys(remote.api);
+    domains.forEach(function(domain) {
+      var methods = Object.keys(remote.api[domain]);
+      methods.forEach(function(method) {
+        var command = domain+'.'+method;
+        this.api.push(command);
+        this.chromeWrappers[command] = this.sendCommand.bind(this, command);
+      }.bind(this));
+    }.bind(this));
+    return this.api;
   }
 };
 

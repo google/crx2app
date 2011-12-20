@@ -15,7 +15,7 @@ function getChromeExtensionPipe(iframeDomain){
 
     // call this method before the chromeIframe can load
     // so we can be listening for its introduction message.
-    // do not call postMessage until the callback fires.
+    // do not call .addListener or .postMessage until the callback fires.
     attach: function(callback) {
       this.onIntroduction = this.onAttach.bind(this, callback);
       window.addEventListener('message', this.onIntroduction, false);
@@ -26,7 +26,7 @@ function getChromeExtensionPipe(iframeDomain){
       window.removeEventListener('message', this.fromExtnToApp, false);
     },
     
-    // Get the assigned name of the port and connect to it
+    // Get the source window and listen to it
     //
     onAttach: function(callback, event) {
       console.log("proxyChromePipe onAttach called by "+event.origin);
@@ -37,13 +37,19 @@ function getChromeExtensionPipe(iframeDomain){
         // detach this listener
         window.removeEventListener('message', this.onIntroduction, false);
         
+        // the proxying function will callback on the reply from the chromeIframe
+        this.listener = function(data) {
+           // signal the app that we are ready
+          callback();
+          
+          // do the callback dance one time only
+          delete this.listener;
+        }.bind(this);
+
         // rebind the listener to proxying function
         window.addEventListener('message', this.fromExtnToApp, false);
       
-        // signal the app that we are ready
-        callback();
-
-        // signal the extn that we are ready with echo
+        // signal the extn that we are ready by forwarding the introduction
         this.fromAppToExtn(event.data); 
       } // else not for us
     },
@@ -59,6 +65,7 @@ function getChromeExtensionPipe(iframeDomain){
     },
     
     fromExtnToApp: function(event) {
+      console.log("crx2app.appEnd.fromExtnToApp in "+window.location, event);
       if (this.listener) {
         if (event.origin === iframeDomain) {
           this.listener(event.data);
@@ -67,6 +74,10 @@ function getChromeExtensionPipe(iframeDomain){
     },
 
     fromAppToExtn: function(msgObj) {
+      if (!this.listener) {
+        console.error("crx2app/appEnd/proxyChromePipe.fromAppToExtn: sending but not listening");
+      }
+      console.log("proxyChromePipe postMessage "+iframeDomain, msgObj);
       this.source.postMessage(msgObj, iframeDomain);
     },
     

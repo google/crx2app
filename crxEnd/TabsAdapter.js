@@ -19,32 +19,33 @@ TabsAdapter.path = 'chrome.tabs';
 
 
 TabsAdapter.prototype = {
-
-  create: function(createProperties) {
-    var cleanCreateProperties = this._cleanseCreateProperties(createProperties);
-    chrome.tabs.create(cleanCreateProperties, this.noErrorPosted);
-  },
+  chromeWrappers: {
+    create: function(createProperties) {
+      var cleanCreateProperties = this._cleanseCreateProperties(createProperties);
+      chrome.tabs.create(cleanCreateProperties, this.noErrorPosted);
+    },
   
-  // NB The debugger will see progress events from the devtools and chrome.extension
-  update: function(tabId, updateProperties) {
-    var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
-    if (index > -1) {
-      chrome.tabs.update(tabId, updateProperties);
-    } else {
-      var msg = "update got invalid tabId: "+tabId;
-      this.postError(msg);
-    }
-  },
+    // NB The debugger will see progress events from the devtools and chrome.extension
+    update: function(tabId, updateProperties) {
+      var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
+      if (index > -1) {
+        chrome.tabs.update(tabId, updateProperties);
+      } else {  
+        var msg = "update got invalid tabId: "+tabId;
+        this.postError(msg);
+      }
+    },
   
-  remove: function(indices) {
-    if (typeof indices === 'number') {
-      indices = [indices];
+    remove: function(indices) {
+      if (typeof indices === 'number') {
+        indices = [indices];
+      }
+      var indexToId = this.windowsAdapter.chromeTabIds;
+      var chromeIndices = indices.map(function(index) {
+        return indexToId[index];
+      });
+      chrome.tabs.remove(chromeIndices, this.noErrorPosted);
     }
-    var indexToId = this.windowsAdapter.chromeTabIds;
-    var chromeIndices = indices.map(function(index) {
-      return indexToId[index];
-    });
-    chrome.tabs.remove(chromeIndices, this.noErrorPosted);
   },
   //---------------------------------------------------------------------------------------------------------
   // Events

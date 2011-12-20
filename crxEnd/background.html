@@ -17,10 +17,16 @@
 <!-- for the constants -->
 <script src="../appEnd/appEnd.js"></script>
 <script>
+function define(deps, defn) {
+  window.remote = defn();
+}
+</script>
+<script src="../rpc/remote.js"></script>
+<script>
 
 var  WindowsAdapter = makeWindowsAdapter(chrome, PostSource);
 var  TabsAdapter = makeTabsAdapter(chrome, PostSource);
-var  DebuggerAdapter = makeDebuggerAdapter(chrome, PostSource);
+var  DebuggerAdapter = makeDebuggerAdapter(chrome, PostSource, window.remote);
 
 function adapterFactory(origin) {
   var adapters = {};

@@ -2,24 +2,27 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-console.log('jsDebugger.js loaded');
-define(  ['../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
-  function(JSONMarshall, remote, chrome) {
+console.log('JavaScriptDebugger.js loaded');
+define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
+  function(Q, JSONMarshall, remote, chrome) {
   
-  var jsDebugger = {};
+  var JavaScriptDebugger = function(tabId, connection) {
+    this.tabId = tabId;
+    this.connect(connection);
+  };
   
   //---------------------------------------------------------------------------------------------
   //
-  jsDebugger.promiseStartDebugger = function() {
+  JavaScriptDebugger.prototype.promiseStartDebugger = function() {
     return this.remote.Debugger.enable();
   };
   
-  jsDebugger.stopDebugger = function() {
+  JavaScriptDebugger.prototype.stopDebugger = function() {
     this.remote.Debugger.disable();
   };
     
   // Implement Remote.events
-  jsDebugger.remoteResponseHandlers = {
+  JavaScriptDebugger.prototype.remoteResponseHandlers = {
     Debugger: {
         breakpointResolved: function(breakpointId, location) {
           console.log("JavaScriptEventHandler", arguments);
@@ -49,29 +52,43 @@ define(  ['../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
         }
       }
   };
-  jsDebugger.chromeResponseHandlers = {
+  JavaScriptDebugger.prototype.chromeResponseHandlers = {
     
+  };
+  
+  JavaScriptDebugger.openInDebug = function(url, connection, chromeProxy) {
+    var deferred = Q.defer();
+    chromeProxy.windows.create({},  function onCreated(win) {
+      console.log("JavaScriptDebugger openInDebug onCreated callback", win);
+      var tabId = win.tabs[0].id;
+      var jsDebugger = new JavaScriptDebugger(tabId, connection);
+    
+      var enabled = jsDebugger.remote.Debugger.enable();
+    
+      Q.when(enabled, function(enabled) {
+        chromeProxy.tabs.update({url: url}, function(tab) {
+          return deferred.resolve(jsDebugger);
+        });
+      });
+    });
+    return deferred.promise;
   };
   
   //---------------------------------------------------------------------------------------------
   
-  jsDebugger.connect = function(channel) {
+  JavaScriptDebugger.prototype.connect = function(channel) {
       this.remote = Object.create(JSONMarshall);
       this.remote.responseHandlers = this.remoteResponseHandlers;
       this.remote.addHandlers(remote, this.remote);
       this.remote.buildImplementation(remote, this.remote, channel);
       
-      this.chrome = Object.create(JSONMarshall);
-      this.chrome.responseHandlers = this.chromeResponseHandlers;
-      this.chrome.addHandlers(chrome, this.chrome);
-      this.chrome.buildImplementation(chrome, this.chrome, channel);
+     
   };
   
-  jsDebugger.disconnect = function(channel) {
+  JavaScriptDebugger.prototype.disconnect = function(channel) {
       this.stopDebugger();
       this.remote.disconnect(channel);
-      this.chrome.disconnect(channel);
   };
 
-  return jsDebugger;
+  return JavaScriptDebugger;
 });

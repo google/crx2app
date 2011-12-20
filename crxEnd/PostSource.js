@@ -1,7 +1,7 @@
 // See Purple/license.txt for Google BSD license
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
-/*global chrome */
+/*global chrome console*/
 
 function PostSource(path) {
   return {
@@ -20,8 +20,15 @@ function PostSource(path) {
       } // else our port is not open
     },  
   
-    postError: function(msg) {
-      this.postMessage({source: this.path, method: 'onError', params: [msg]});
+    postError: function(msg, jsonObj) {
+      var errorData = {source: this.path, method: 'onError', params: [msg]};
+      if(jsonObj) {
+         errorData.params = errorData.params.concat(jsonObj);
+        if (jsonObj.serial) { // then we have an error in a response
+          errorData.serial = jsonObj.serial;
+        }
+      }
+      this.postMessage(errorData);
     },
     
     noErrorPosted: function() {

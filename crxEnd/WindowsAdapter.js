@@ -35,14 +35,15 @@ WindowsAdapter.instanceCounter = 0;
 WindowsAdapter.prototype = {
   
   // API functions, restricted versions of the chrome.windows functions
+  chromeWrappers: {
+    create: function(serial, createData) {
+      var cleanCreateData = this._cleanseCreateData(createData);
+      chrome.windows.create(cleanCreateData, this.onCreated.bind(this, serial));
+    },
   
-  create: function(serial, createData) {
-    var cleanCreateData = this._cleanseCreateData(createData);
-    chrome.windows.create(cleanCreateData, this.onCreated.bind(this, serial));
-  },
-  
-  getAll: function(serial, getInfo) {
-    chrome.windows.getAll(getInfo, this.onGetAll.bind(this, serial));
+    getAll: function(serial, getInfo) {
+      chrome.windows.getAll(getInfo, this.onGetAll.bind(this, serial));
+    }
   },
 
   //------------------------------------------------------------------------------------ 

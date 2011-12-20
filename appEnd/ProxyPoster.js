@@ -22,7 +22,7 @@ ProxyPoster.prototype = {
   attach: function() {
     try {
       // prepare for messages from otherWindow
-      window.addEventListener('message', this.recvIntroduction, false);
+      window.addEventListener('message', this.onIntroduction, false);
       
       // prepare from messages from chrome
       this.attachment.addListener(this.fromExtnToOther);
@@ -44,15 +44,20 @@ ProxyPoster.prototype = {
   
   // up to otherWindow
   fromExtnToOther: function(msgObj) {
+    console.log("ProxyPoster fromExtnToOther", msgObj);
     this.otherWindow.postMessage(msgObj, this.targetOrigin);
   },
   
-  // first incoming 'message' event
-  recvIntroduction: function(event) {
+  // first incoming 'message' event from other window
+  onIntroduction: function(event) {
+    console.log("ProxyPoster onIntroduction", event);
     if ( event.data.indexOf && (event.data.indexOf(this.handShake) === 0) ) {
       this.targetOrigin = event.origin;  // now we can target, rather than broadcast
-      window.removeEventListener('message', this.recvIntroduction, false);
+      window.removeEventListener('message', this.onIntroduction, false);
       window.addEventListener('message', this.fromOtherWindow, false);
+      
+      // echo to close loop with sender
+      this.fromExtnToOther(event.data);
     } else {
        return; // not for us
     }
@@ -60,6 +65,7 @@ ProxyPoster.prototype = {
 
   // incoming 'message' event
   fromOtherWindow: function(event) {
+    console.log("ProxyPoster recv", event.data);
     this.attachment.postMessage(event.data);
   },
   
@@ -67,6 +73,6 @@ ProxyPoster.prototype = {
   _bindListeners: function() {
     this.fromOtherWindow = this.fromOtherWindow.bind(this);
     this.fromExtnToOther = this.fromExtnToOther.bind(this);
-    this.recvIntroduction = this.recvIntroduction.bind(this);
+    this.onIntroduction = this.onIntroduction.bind(this);
   }
 };

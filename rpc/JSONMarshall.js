@@ -37,31 +37,60 @@ define(['lib/q/q'], function (Q) {
     }
     return params;
   }
+ 
+ 
+  // global monotonic 
+  var serialCounter = 1; // every serial must be truthy
+  // promises made and not kept by serial
+  var deferredBySerial = {};
 
-  var commandCounter = 0;
-  var deferredById = {};
-
-  function makeSendRemoteCommand(channel, domain, method, paramNames) {
+  function makeSendRemoteCommand(channel, target, method) {
     // we close over the argumentes
     return function sendRemoteCommand() {  // arguments here will depend upon method
-      var params = bindParams(paramNames, arguments);
-      var message = {method: domain+'.'+method,  params: params, cmd_id: commandCounter++};
+      var params = Array.prototype.slice.apply(arguments, [0]);
+      
+      // Our sequence number for RPC
+      var serial =  serialCounter++;
+      
       // store the deferred for recvResponseData
-      var deferred = deferredById[message.cmd_id] = Q.defer();
+      var deferred = deferredBySerial[serial] = Q.defer();
+      var promise = deferred.promise;
+      
+      // Check for a callback function
+      if (typeof params[params.length - 1] === 'function') {
+        // remove the callback, otherwise we get a DOM error on serialization
+        var callback = params.pop();
+        // once we get an answer, send it to the callback
+        promise = Q.when(promise, function(promise){
+          console.log("callback now "+promise);
+          callback(promise);
+        }, function() {
+          var errMsg = arguments[0];
+          if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.params && errMsg.params.length ) {
+            console.error("Error "+errMsg.params[0], errMsg.params[1]);
+          } else {
+            console.error("JSONMarshall sendRemoteCommand ERROR ", arguments);
+          }
+        });
+        promise.end();
+      }
+      
+      var message = {target: target, method: method,  params: params, serial: serial};
+      
       channel.postMessage(message);
       // callers can wait on the promise to be resolved by recvResponseData
-      return deferred.promise; 
+      return promise; 
     };
   }
   
-  function marshallForHandler(indexer, handler) {
+  function marshallForHandler(impl, handler) {
     return function (objFromJSON, p_id) {
       var args = [];
       for (var i = 0; i < handler.parameters.length; i++) {
         args[i] = objFromJSON[handler.parameters[i]];
       }
       args.push(p_id);  // purple specific clock tick postpended
-      handler.apply(indexer, args);
+      handler.apply(impl, args);
     };
   }
   
@@ -107,44 +136,41 @@ define(['lib/q/q'], function (Q) {
     }
   };
   
-  JSONMarshall.recvResponse = function(p_id, data) {
-    // {source: "debugger", name: "response", result: result, request: request}
-    if (data && data.source && data.name) {
-      if (data.name === 'response') {
-        this.recvResponseData(p_id, data);
-      } 
-    }  // else not a response
+  JSONMarshall.recvResponse = function(data) {
+  console.log("JSONMarshal.recvResponse ", data);
+    if (data && data.serial) {
+      this.recvResponseData(data);
+    } else { // not a response
+      console.error("JSONMarshal.recvResponse dropped data, no serial ", data);
+    }
   };
   
   
-  JSONMarshall.recvResponseData = function(p_id, data) {
-    var cmd_id = data.request.cmd_id; // set by sendRemoteCommand
-    var deferred = deferredById[cmd_id];
+  JSONMarshall.recvResponseData = function(data) {
+    var serial = data.serial; // set by sendRemoteCommand
+    var deferred = deferredBySerial[serial];
     if (deferred) {
       try {
-      if (data.result) {
-        deferred.resolve(data.result);
-      } else if (data.error) {
-        deferred.reject(data.error);
-      } else {
-        deferred.reject({error:"recvResponseData with incorrect data"});
-      }
+        if (data.method && (data.method !== 'onError') ) {
+          deferred.resolve(data.result);
+        } else {
+          deferred.reject(data);
+        }
       } finally {
-        console.log("recvResponseData completed "+cmd_id, data);
-        delete deferredById[cmd_id];
+        console.log("recvResponseData completed "+serial, data);
+        delete deferredBySerial[serial];
       }
     } // else another remote may have created the request
   };
   
-  
-  JSONMarshall.addHandlers = function(iface, indexer) {
-    this.jsonHandlers = {}; // by domain and function name
-    var responseHandlerObject = indexer.responseHandlers;  // {Debugger:{functions}, Console:{functions}}
-    var remoteImpl = this;
+  // return two level dictionary of functions for each domain's events.
+  JSONMarshall.getEventHandlers = function(iface, impl) {
+    var jsonHandlers = {}; // by domain and function name
+    var responseHandlerObject = impl.responseHandlers;  // {Debugger:{functions}, Console:{functions}}
     var events = iface.events;
     var domainNames = Object.keys(events);
     domainNames.forEach(function buildDomainResponse(domainName) {
-      remoteImpl.jsonHandlers[domainName] = {};
+      jsonHandlers[domainName] = {};
       var handlerNames = Object.keys(events[domainName]);
       handlerNames.forEach(function buildHandler(handlerName) {
         var handlerSpec = events[domainName][handlerName]; // an empty function
@@ -167,24 +193,42 @@ define(['lib/q/q'], function (Q) {
             handler.parameters[i] = param;
           }
         }
-        remoteImpl.jsonHandlers[domainName][handlerName] = marshallForHandler(indexer, handler);
+        jsonHandlers[domainName][handlerName] = marshallForHandler(impl, handler);
       }.bind(this));
     });
+    return jsonHandlers;
+  };
+   
+  // Walk the API and implement each function to send over channel.
+  JSONMarshall.buildPromisingCalls = function(iface, impl, channel) {
+    var methods = Object.keys(iface.api);
+    methods.forEach(function buildMethod(method) {
+      // each RHS is a function returning a promise
+      impl[method] = makeSendRemoteCommand(channel, iface.name, method);
+    });
+    this.bindRecv(channel);
   };
   
-    // Walk the API and implement each function to send over channel.
-  JSONMarshall.buildImplementation = function(iface, impl, channel) {
+  // chrome.debugger remote methods have domain.method names
+  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, channel) {
     var api = iface.api;
     var domains = Object.keys(api);
     domains.forEach(function buildSend(domain) {
       impl[domain] = {};
       var methods = Object.keys(api[domain]);
       methods.forEach(function buildMethod(method) {
-        var paramNames = getParamsFromAPI(api[domain][method]);
         // each RHS is a function returning a promise
-        impl[domain][method] = makeSendRemoteCommand(channel, domain, method, paramNames);
+        impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method);
       });
     });
+    this.bindRecv(channel);
+  };
+  JSONMarshall.bindRecv = function(channel) {
+    // bind promise resolution to the recv 
+    if (!this.boundRecv) {
+      this.boundRecv = this.recvResponse.bind(this);
+    }
+    channel.addListener(this.boundRecv);
   };
 
   return JSONMarshall;

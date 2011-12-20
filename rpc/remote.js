@@ -7,7 +7,7 @@ define([], function () {
 
   // These methods are defined ultimately in InspectorBackendStub.js on chrome source code
   var remote = {
-    name: "remote",
+    name: "chrome.debugger",
     api: { // These will be mapped to functions returning promises
       Console: {
         enable: function(){},

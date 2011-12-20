@@ -122,23 +122,23 @@ var crxEnd = {
     var target = this.chromeAdapters[jsonObj.target];
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
-        var method = target[jsonObj.method];
+        var method = target.chromeWrappers[jsonObj.method];
         if (jsonObj.params instanceof Array) {
           if (typeof jsonObj.serial === 'number') {
             // send on to chrome
             method.apply(target, [jsonObj.serial].concat(jsonObj.params) );
           } else {
-            windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method);
+            windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method, jsonObj);
           }
         } else {
-          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array"+jsonObj.target+"."+jsonObj.method);
+          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array"+jsonObj.target+"."+jsonObj.method, jsonObj);
         }
       } else {
-        windowsAdapter.postError("method \'"+jsonObj.method+"\' is not one of "+jsonObj.target+'.'+target.api.join(',') );
+        windowsAdapter.postError("method \'"+jsonObj.method+"\' is not one of "+jsonObj.target+'.'+target.api.join(','), jsonObj);
       }
     } else {
       // reply with error
-      windowsAdapter.postError("target \'"+jsonObj.target+"\' does not exist");
+      windowsAdapter.postError("target \'"+jsonObj.target+"\' is not one of "+Object.keys(this.chromeAdapters), jsonObj);
     }
   },
   

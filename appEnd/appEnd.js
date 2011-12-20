@@ -67,11 +67,15 @@ function getChromeExtensionPipe(){
     
     fromExtnToApp: function(msgObj) {
       if (this.listener) {
+        console.log("appEnd fromExtnToApp", msgObj);
         this.listener(msgObj);
-      } // else no listener
+      } else { // else no listener
+        console.info("crx2app.appEnd no listener for recv", msgObj);
+      }
     },
 
     fromAppToExtn: function(msgObj) {
+      console.log("appEnd postMessage", msgObj);
       this.port.postMessage(msgObj);
     },
     
