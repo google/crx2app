@@ -152,7 +152,7 @@ define(['lib/q/q'], function (Q) {
     if (deferred) {
       try {
         if (data.method && (data.method !== 'onError') ) {
-          deferred.resolve(data.result);
+          deferred.resolve(data.params[0]);
         } else {
           deferred.reject(data);
         }
