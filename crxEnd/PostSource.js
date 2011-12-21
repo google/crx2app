@@ -3,6 +3,9 @@
 
 /*global chrome console*/
 
+
+// Close over path, but methods will have windowAdapter for |this|
+ 
 function PostSource(path) {
   return {
     setPort: function(port) {
@@ -15,13 +18,15 @@ function PostSource(path) {
 
     postMessage: function(msgObj) {
       if (this.port) {
-        console.log("PostSource.postMessage "+this.port.name, msgObj);
+        console.log("PostSource.postMessage "+this.port.name+' '+msgObj.source+"."+msgObj.method, msgObj);
         this.port.postMessage(msgObj);
-      } // else our port is not open
+      } else {// else our port is not open
+        console.error("PostSource.postMessage no port for "+path);
+      }
     },  
   
     postError: function(msg, jsonObj) {
-      var errorData = {source: this.path, method: 'onError', params: [msg]};
+      var errorData = {source: this.getPath(), method: 'onError', params: [msg]};
       if(jsonObj) {
          errorData.params = errorData.params.concat(jsonObj);
         if (jsonObj.serial) { // then we have an error in a response
@@ -31,12 +36,19 @@ function PostSource(path) {
       this.postMessage(errorData);
     },
     
-    noErrorPosted: function() {
+    noErrorPosted: function(jsonObj) {
       if (chrome.extension.lastError) {
-        this.postError(this.getPath(), chrome.extension.lastError);
+        this.postError(chrome.extension.lastError, jsonObj);
         return false;
       }
       return true;
+    },
+    
+    // Forward command responses from Chrome to App
+    onResponse: function(serial, jsonObj, result) {
+      if ( this.noErrorPosted({serial: serial}) ) {
+        this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [result], request: jsonObj});
+      } 
     }
   };
 }

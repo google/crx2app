@@ -15,7 +15,13 @@ function makeDebuggerAdapter(chrome, PostSource, remote) {
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
   this.debuggeeTabIds = [];
-  this.port = windowsAdapter.port;
+  
+  var portDelegate = new PostSource(DebuggerAdapter.path);
+  Object.keys(portDelegate).forEach(function(key) {
+    this[key] = portDelegate[key].bind(windowsAdapter);   
+  }.bind(this));
+  this.setPort( windowsAdapter.port );
+  
   this._bindListeners();
   this._buildAPI(remote);
 }
@@ -27,47 +33,49 @@ DebuggerAdapter.prototype = {
 
   //-------------------------------------------------------------------------
   
-  attach: function(debuggee, version, callback) {
-    if (!this._checkDebuggee(debuggee)) {
-      return;
-    }
-    this.debuggeeTabIds.push(debuggee.tabId);
+  chromeWrappers: {
+    attach: function(serial, debuggee, version, callback) {
+      if (!this._checkDebuggee(debuggee)) {
+        return;
+      }
+      this.debuggeeTabIds.push(debuggee.tabId);
     
-    // prepare for events from chrome.debugger
-    chrome.experimental.debugger.onEvent.addListener(this.onEvent);
+      // prepare for events from chrome.debugger
+      chrome.experimental.debugger.onEvent.addListener(this.onEvent);
+      
+      // Setup the connection to the devtools backend
+      chrome.experimental.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
+      
+      // detach if the tab is removed
+      chrome.tabs.onRemoved.addListener(this.onRemoved);
+    },
     
-    // Setup the connection to the devtools backend
-    chrome.experimental.debugger.attach({tabId: debuggee.tabId}, version, this.noErrorPosted);
-    
-    // detach if the tab is removed
-    chrome.tabs.onRemoved.addListener(this.onRemoved);
-  },
-    
-  sendCommand: function(method, serial, debuggee, params) {
-    if (!this._checkDebuggee(debuggee)) {
-      return;
-    }
-    
-    chrome.experimental.debugger.sendCommand(
-      { tabId: debuggee.tabId },
-      method,
-      params,
-      this.onResponse.bind(this, serial, method, params)
-    );
-  },
+    sendCommand: function(method, serial, debuggee, params) {
+      if (!this._checkDebuggee(debuggee)) {
+        return;
+      }
+      
+      chrome.experimental.debugger.sendCommand(
+        { tabId: debuggee.tabId },
+        method,
+        params,
+        this.onResponse.bind(this, serial, {method: method, params:params})
+      );
+    },
   
-  detach: function(debuggee) {
-    if (!this._checkDebuggee(debuggee)) {
-      return;
-    }
-    chrome.experimental.debugger.onEvent.removeListener(this.onEvent);    
+    detach: function(serial, debuggee) {
+      if (!this._checkDebuggee(debuggee)) {
+        return; 
+      }
+      chrome.experimental.debugger.onEvent.removeListener(this.onEvent);    
     
-    chrome.experimental.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
-    var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
-    if (index > -1) {
-      this.debuggeeTabIds.splice(index, 1);
-    } else {
-      console.error("DebuggerAdapter detach ERROR, no such debuggee tabId "+debuggee.tabId);
+      chrome.experimental.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
+      var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
+      if (index > -1) {
+        this.debuggeeTabIds.splice(index, 1);
+      } else {
+        console.error("DebuggerAdapter detach ERROR, no such debuggee tabId "+debuggee.tabId);
+      }
     }
   },
   
@@ -81,12 +89,10 @@ DebuggerAdapter.prototype = {
     }
   },
   
-  // Forward command responses from Chrome to App
-  onResponse: function(serial, method, params, result) {
-    if (!this.noErrorPosted()) {
-      var request = {method: method, params: params};
-      this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [result], request: request});
-    } 
+  onAttach: function(serial) {
+    if ( this.noErrorPosted({serial: serial}) ) {
+      this.postMessage({source: this.getPath(), method: "onAttach", serial: serial, params:[]});
+    }
   },
   
   // The browser backend announced detach
@@ -121,26 +127,19 @@ DebuggerAdapter.prototype = {
   },
   
   _buildAPI: function(remote) {
-    this.api = [];
-    this.chromeWrappers = {};
+    this.api = Object.keys(this.chromeWrappers);
     var domains = Object.keys(remote.api);
     domains.forEach(function(domain) {
       var methods = Object.keys(remote.api[domain]);
       methods.forEach(function(method) {
         var command = domain+'.'+method;
         this.api.push(command);
-        this.chromeWrappers[command] = this.sendCommand.bind(this, command);
+        this.chromeWrappers[command] = this.chromeWrappers.sendCommand.bind(this, command);
       }.bind(this));
     }.bind(this));
     return this.api;
   }
 };
-
-  var postSource = new PostSource(DebuggerAdapter.path);
-  Object.keys(postSource).forEach(function(key) {
-    DebuggerAdapter.prototype[key] = postSource[key];   
-  });
-
 
   return DebuggerAdapter;
 }

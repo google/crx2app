@@ -8,7 +8,13 @@ var makeTabsAdapter = function(chrome, PostSource) {
 function TabsAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter; // the adapter for our chrome.window
   windowsAdapter.setTabAdapter(this);   // backpointer for onCreated
-  this.port = windowsAdapter.port;
+  
+  var portDelegate = new PostSource(TabsAdapter.path);
+  Object.keys(portDelegate).forEach(function(key) {
+  console.log("portDelegate "+key);
+    this[key] = portDelegate[key].bind(windowsAdapter);   
+  }.bind(this));
+  
   this._bindListeners();
   
   this.api = ['create', 'update', 'remove'];
@@ -20,23 +26,24 @@ TabsAdapter.path = 'chrome.tabs';
 
 TabsAdapter.prototype = {
   chromeWrappers: {
-    create: function(createProperties) {
+    create: function(serial, createProperties) {
       var cleanCreateProperties = this._cleanseCreateProperties(createProperties);
       chrome.tabs.create(cleanCreateProperties, this.noErrorPosted);
     },
   
     // NB The debugger will see progress events from the devtools and chrome.extension
-    update: function(tabId, updateProperties) {
+    update: function(serial, tabId, updateProperties) {
       var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
       if (index > -1) {
-        chrome.tabs.update(tabId, updateProperties);
+        var bound = this.onResponse.bind(this, {serial:serial, method: updateProperties, params:[tabId, updateProperties]});
+        chrome.tabs.update(tabId, updateProperties, bound);
       } else {  
         var msg = "update got invalid tabId: "+tabId;
         this.postError(msg);
       }
     },
   
-    remove: function(indices) {
+    remove: function(serial, indices) {
       if (typeof indices === 'number') {
         indices = [indices];
       }
@@ -127,10 +134,7 @@ TabsAdapter.prototype = {
   }
 };
 
-  var postSource = new PostSource(TabsAdapter.path);
-  Object.keys(postSource).forEach(function(key) {
-    TabsAdapter.prototype[key] = postSource[key];   
-  });
+
 
   return TabsAdapter;
 };

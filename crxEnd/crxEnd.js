@@ -118,7 +118,7 @@ var crxEnd = {
   
   // From App 
   onMessage: function(windowsAdapter, jsonObj) {
-    console.log("crx2app/crxEnd: onMessage ", jsonObj);
+    console.log("crx2app/crxEnd: onMessage "+jsonObj.target+"."+jsonObj.method, jsonObj);
     var target = this.chromeAdapters[jsonObj.target];
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
