@@ -47,7 +47,7 @@ var crxEnd = {
     }
   },
   
-  getWindowsAdaptersByOrigin: function(origin) {
+  getWindowsAdaptersByOrigin: function(origin, debuggerTab) {
     var windowsAdapter;
     Object.keys(this.windowsAdaptersByName).forEach(function(name) {
       if (this.windowsAdaptersByName[name].origin === origin) {
@@ -58,7 +58,7 @@ var crxEnd = {
     if (!windowsAdapter) {  // then this origin has not been seen
       if (this.isOriginAllowed(origin)) {
         // then we need to create one for this origin
-        this.chromeAdapters = this.adapterFactory(origin);
+        this.chromeAdapters = this.adapterFactory(origin, debuggerTab);
         windowsAdapter = this.chromeAdapters['chrome.windows'];
         this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
       } // else no adapter for you
@@ -78,7 +78,7 @@ var crxEnd = {
       
       var origin = ensureOrigin(sender.tab.url);
       if (origin) {
-        var windowsAdapter = this.getWindowsAdaptersByOrigin(origin);
+        var windowsAdapter = this.getWindowsAdaptersByOrigin(origin, sender.tab);
         if (windowsAdapter) {
       
           // prepare for connection

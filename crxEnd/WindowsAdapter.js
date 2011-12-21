@@ -17,8 +17,9 @@
 
 var makeWindowsAdapter = function(chrome, PostSource) {
 
-function WindowsAdapter(origin) {
+function WindowsAdapter(origin, debuggerTab) {
   this.debuggerOrigin = origin; // the debugger we accept connections from
+  this.debuggerTab = debuggerTab;
   this.instanceIndex = ++WindowsAdapter.instanceCounter;
   this.name = WindowsAdapter.path + '.' + WindowsAdapter.instanceCounter;
   this.chromeWindowIds = [];  // only these ids can be used by client

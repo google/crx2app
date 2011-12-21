@@ -17,6 +17,7 @@ function TabsAdapter(windowsAdapter) {
   
   this._bindListeners();
   
+  this.useInfobar = true;
   this.api = ['create', 'update', 'remove'];
   this._connect();
 }
@@ -35,7 +36,7 @@ TabsAdapter.prototype = {
     update: function(serial, tabId, updateProperties) {
       var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
       if (index > -1) {
-        var bound = this.onResponse.bind(this, {serial:serial, method: updateProperties, params:[tabId, updateProperties]});
+        var bound = this.onUpdateResponse.bind(this, serial);
         chrome.tabs.update(tabId, updateProperties, bound);
       } else {  
         var msg = "update got invalid tabId: "+tabId;
@@ -65,20 +66,39 @@ TabsAdapter.prototype = {
       // |this| is windowsAdapter inside of barrier()
       this.chromeTabIds.push(chromeTab.id);
       this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: [chromeTab]});
-      tabAdapter.putUpInfobar(chromeTab.id);     
+      tabAdapter.warnAttached(chromeTab.id);     
     });
   },
   
   putUpInfobar: function(tabId) {
-      var details = {tabId: tabId, path: "crxEnd/warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
-      console.log("putUpInfoBar ready", details);
-      chrome.experimental.infobars.show(details, function(win){
-        console.log("putUpInfobar done", win);
-      });
+    var details = {tabId: tabId, path: "crxEnd/warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
+    console.log("putUpInfoBar ready", details);
+    chrome.experimental.infobars.show(details, function(win){
+      console.log("putUpInfobar done", win);
+    });
   },
   
+  warnAttached: function(tabId) {
+    if (this.useInfobar) {
+      this.putUpInfobar(tabId);
+    }
+    chrome.pageAction.setTitle({tabId: tabId, title: "This tab controlled by "+this.windowsAdapter.debuggerOrigin});
+    chrome.pageAction.show(tabId);
+    console.log("TabsAdapter warnAttach on tabId: "+tabId);
+  },
+  
+  // callback from update()
+  onUpdateResponse: function(serial, tab) {
+    if ( this.noErrorPosted({serial: serial}) ) {
+      this.warnAttached(tab.id);
+      this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [tab]});
+    } 
+  },
+  
+  // external event onUpdated
   onUpdated: function(tabId, changeInfo, tab) {
     this.barrier(tabId, arguments, function(tabId, changeInfo, tab) {
+      this.warnAttached(tabId);
       this.postMessage({source: this.getPath(), method: 'onUpdated', params:[tabId, changeInfo, tab]});
     });
   },
@@ -90,6 +110,24 @@ TabsAdapter.prototype = {
     });
   },
   
+  onPageActionClicked: function() {
+    var updateInfo = {focused: true};
+    chrome.windows.update(this.windowsAdapter.debuggerTab.windowId, updateInfo, function(win) {
+      if (chrome.extension.lastError) {
+        console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
+      } else {
+        console.log("crx2app onPageActionClicked update window complete", win);
+      }
+    });
+    var updateProperties = {active: true, highlighted: true};
+    chrome.tabs.update(this.windowsAdapter.debuggerTab.id, updateProperties, function(tab) {
+      if (chrome.extension.lastError) {
+        console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
+      } else {
+        console.log("crx2app onPageActionClicked update complete", tab);
+      }
+    });
+  },
   //---------------------------------------------------------------------------------------------------------
   // Call the action iff the tab is allowed to the debugger
   // action takes the same arguments as the caller of barrier, plus index is available
@@ -105,7 +143,7 @@ TabsAdapter.prototype = {
     // build a record of the tabs being debugged
     chrome.tabs.onCreated.addListener(this.onCreated);  
     // prepare to update debuggee records
-    chrome.windows.onRemoved.addListener(this.onUpdated);
+    chrome.tabs.onUpdated.addListener(this.onUpdated);
     // prepare to clean up the records
     chrome.tabs.onRemoved.addListener(this.onRemoved);
     // chrome.tabs functions available to client WebApps
@@ -113,7 +151,7 @@ TabsAdapter.prototype = {
 
   _disconnect: function() {
     chrome.tabs.onCreated.removeListener(this.onCreated);  
-    chrome.windows.onRemoved.removeListener(this.onUpdated);
+    chrome.tabs.onUpdated.removeListener(this.onUpdated);
     chrome.tabs.onRemoved.removeListener(this.onRemoved);
   },
   
@@ -131,6 +169,7 @@ TabsAdapter.prototype = {
     this.onCreated = this.onCreated.bind(this);
     this.onRemoved = this.onRemoved.bind(this);
     this.onUpdated = this.onUpdated.bind(this);
+    chrome.pageAction.onClicked.addListener(this.onPageActionClicked.bind(this));
   }
 };
 

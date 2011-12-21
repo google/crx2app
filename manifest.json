@@ -16,8 +16,12 @@
       "webNavigation"
     ],
   "options_page": "crxEnd/options.html",
+  "page_action": {
+    "default_icon": "images/warningMediumIcon.png",
+    "default_title": "An external developer tool is controlling this tab"
+  },
   "icons":
     {
-      "16" : "orion16.png"
+      "16" : "images/orion16.png"
     }
 }

@@ -28,9 +28,9 @@ var  WindowsAdapter = makeWindowsAdapter(chrome, PostSource);
 var  TabsAdapter = makeTabsAdapter(chrome, PostSource);
 var  DebuggerAdapter = makeDebuggerAdapter(chrome, PostSource, window.remote);
 
-function adapterFactory(origin) {
+function adapterFactory(origin, debuggerTab) {
   var adapters = {};
-  var windowsAdapter = new WindowsAdapter(origin);
+  var windowsAdapter = new WindowsAdapter(origin, debuggerTab);
   adapters[WindowsAdapter.path] = windowsAdapter;
   adapters[TabsAdapter.path] = new TabsAdapter(windowsAdapter);
   adapters[DebuggerAdapter.path] = new DebuggerAdapter(windowsAdapter);
