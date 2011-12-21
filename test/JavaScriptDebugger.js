@@ -12,13 +12,6 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
   
   //---------------------------------------------------------------------------------------------
   //
-  JavaScriptDebugger.prototype.promiseStartDebugger = function() {
-    return this.remote.Debugger.enable();
-  };
-  
-  JavaScriptDebugger.prototype.stopDebugger = function() {
-    this.remote.Debugger.disable();
-  };
     
   // Implement Remote.events
   JavaScriptDebugger.prototype.remoteResponseHandlers = {
@@ -51,10 +44,14 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
         }
       }
   };
-  JavaScriptDebugger.prototype.chromeResponseHandlers = {
-    
-  };
   
+  /*
+   * create debugger for url in a new Chrome window 
+   * @param url, string URL
+   * @param connection, result from getChromeExtensionPipe
+   * @param chromeProxy, object representing "chrome" extension API
+   * @return promise for JavaScriptDebugger  
+   */
   JavaScriptDebugger.openInDebug = function(url, connection, chromeProxy) {
     var deferred = Q.defer();
     chromeProxy.windows.create({},  function onCreated(win) {
