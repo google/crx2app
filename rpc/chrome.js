@@ -62,6 +62,20 @@ define([], function () {
     }
   };
   
+  chrome.debugger = {
+    name: "chrome.debugger",
+    api: {
+      attach: function(tabId, callback) {},
+      detach: function(tabId, callback) {},
+      // Rather than using this method, use rpc/remote and JSONMarshal.build2LevelPromisingCalls
+      sendRequest: function(tabId, method, params, callback) {}
+    },
+    events: {
+      onDetach: function(tabId){},
+      onEvent: function(tabId, method, params){}
+    }
+  };
+  
   return chrome;
 });     
      
