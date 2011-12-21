@@ -50,6 +50,9 @@ function detach() {
 function testConnection(jsDebugger) {
     console.log("testing jsDebugger");
 }
+function failConnection(err) {
+    console.err("Error "+err, err);
+}
 
 function onMessage(event) {
 
@@ -71,7 +74,7 @@ function onMessage(event) {
    require(['JavaScriptDebugger', 'ChromeProxy'], function testIt(JavaScriptDebugger, ChromeProxy) {
      var chromeProxy = new ChromeProxy(connection, {});
      var jsDebugger = JavaScriptDebugger.openInDebug("http://www.google.com", connection, chromeProxy);
-     testConnection(jsDebugger);
+     Q.when(jsDebugger, testConnection, failConnection).end();
    });
   }
 }
