@@ -106,7 +106,7 @@ DebuggerAdapter.prototype = {
   onRemoved: function(tabId, removeInfo) {
     var index = this.debuggeeTabIds.indexOf(tabId);
     if (index > -1) {
-      this.detach({tabId: tabId});
+      this.chromeWrappers.detach.apply(this, [undefined, {tabId: tabId}]);
     } // else not ours
   },
   
