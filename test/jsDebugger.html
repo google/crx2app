@@ -1,9 +1,9 @@
 <html>
 <head>
 <title>crx2app: jsDebugger test plugin</title>
-<script src="../appEnd/proxyChromePipe.js"></script>
-<script src="../lib/q/q.js"></script>
-<script src="../lib/requirejs/require.js"></script>
+<script src="../extension/appEnd/proxyChromePipe.js"></script>
+<script src="../extension/lib/q/q.js"></script>
+<script src="../extension/lib/requirejs/require.js"></script>
 <script>
 
 /*globals getChromeExtensionPipe window console Q require */
@@ -62,8 +62,9 @@ function onMessage(event) {
     // dynamically load the debugger code
     require({
       paths: {
-        "browser/remote": "rpc",
-        "lib/q":          "../lib/q"
+        "../rpc": "../extension/rpc",
+        "browser/remote": "extension/rpc",
+        "lib/q":          "../extension/lib/q"
       }
     }); 
 
