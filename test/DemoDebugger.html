@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>crx2app: jsDebugger test plugin</title>
+<title>crx2app: DemoDebugger test plugin</title>
 <script src="../extension/appEnd/proxyChromePipe.js"></script>
 <script src="../extension/lib/q/q.js"></script>
 <script src="../extension/lib/requirejs/require.js"></script>
@@ -47,8 +47,8 @@ function detach() {
 
 // Fire the test code.
 //
-function testConnection(jsDebugger) {
-    console.log("testing jsDebugger");
+function testConnection(DemoDebugger) {
+    console.log("testing DemoDebugger");
 }
 function failConnection(err) {
     console.err("Error "+err, err);
@@ -72,10 +72,10 @@ function onMessage(event) {
      console.error(err+"", {stack: err.stack.split('\n')});
    };
 
-   require(['JavaScriptDebugger', 'ChromeProxy'], function testIt(JavaScriptDebugger, ChromeProxy) {
+   require(['DemoDebugger', 'ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
      var chromeProxy = new ChromeProxy(connection, {});
-     var jsDebugger = JavaScriptDebugger.openInDebug("http://www.google.com", connection, chromeProxy);
-     Q.when(jsDebugger, testConnection, failConnection).end();
+     var DemoDebugger = DemoDebugger.openInDebug("http://www.google.com", connection, chromeProxy);
+     Q.when(DemoDebugger, testConnection, failConnection).end();
    });
   }
 }
@@ -98,7 +98,7 @@ window.addEventListener('load', onLoad, false);
 </script>
 </head>
 <body>
-<h1>jsDebugger test plugin</h1>
+<h1>DemoDebugger test plugin</h1>
 <div id="loadChromeIframe">
 </div>
 </body>

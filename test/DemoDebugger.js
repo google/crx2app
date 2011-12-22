@@ -2,11 +2,11 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-console.log('JavaScriptDebugger.js loaded');
+console.log('DemoDebugger.js loaded');
 define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
   function(Q, JSONMarshall, remote, chrome) {
   
-  var JavaScriptDebugger = function(tabId) {
+  var DemoDebugger = function(tabId) {
     this.tabId = tabId;
   };
   
@@ -14,19 +14,19 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
   //
     
   // Implement Remote.events
-  JavaScriptDebugger.prototype.remoteResponseHandlers = {
+  DemoDebugger.prototype.remoteResponseHandlers = {
     Debugger: {
         breakpointResolved: function(breakpointId, location) {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         },
         paused: function(details) {
-          console.log("JavaScriptEventHandler paused", arguments);
+          console.log("DemoDebugger paused", arguments);
         },
         resumed: function() {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         },
         scriptFailedToParse: function(data, errorLine, errorMessage, firstLine, url) {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         },
         scriptParsed: function(endColumn, endLine, isContentScript, scriptId, startColumn, startLine, url, p_id) {
           console.log('scriptParsed '+url);
@@ -34,13 +34,13 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
       },
       Timeline: {
         eventRecorded: function(record) {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         },
         started: function() {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         },
         stopped: function() {
-          console.log("JavaScriptEventHandler", arguments);
+          console.log("DemoDebugger", arguments);
         }
       }
   };
@@ -50,23 +50,23 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
    * @param url, string URL
    * @param connection, result from getChromeExtensionPipe
    * @param chromeProxy, object representing "chrome" extension API
-   * @return promise for JavaScriptDebugger  
+   * @return promise for DemoDebugger  
    */
-  JavaScriptDebugger.openInDebug = function(url, connection, chromeProxy) {
+  DemoDebugger.openInDebug = function(url, connection, chromeProxy) {
     var deferred = Q.defer();
     chromeProxy.windows.create({},  function onCreated(win) {
-      console.log("JavaScriptDebugger openInDebug onCreated callback, trying connect", win);
+      console.log("DemoDebugger openInDebug onCreated callback, trying connect", win);
       var tabId = win.tabs[0].id;
       
-      var jsDebugger = new JavaScriptDebugger(tabId);
+      var jsDebugger = new DemoDebugger(tabId);
     
       var connected = jsDebugger.connect(chromeProxy);
       Q.when(connected, function(connected) {
-        console.log("JavaScriptDebugger openInDebug connected, send enable", connected);
+        console.log("DemoDebugger openInDebug connected, send enable", connected);
         var enabled = jsDebugger.remote.Debugger.enable();
     
         Q.when(enabled, function(enabled) {
-          console.log("JavaScriptDebugger openInDebug enabled", enabled);
+          console.log("DemoDebugger openInDebug enabled", enabled);
           chromeProxy.tabs.update(tabId, {url: url}, function(tab) {
             return deferred.resolve(jsDebugger);
           });
@@ -79,7 +79,7 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
   
   //---------------------------------------------------------------------------------------------
   
-  JavaScriptDebugger.prototype.connect = function(chromeProxy) {
+  DemoDebugger.prototype.connect = function(chromeProxy) {
       this.remote = Object.create(JSONMarshall);
       this.remote.responseHandlers = this.remoteResponseHandlers;
       this.remote.jsonHandlers = this.remote.getEventHandlers(remote, this.remote);
@@ -88,10 +88,10 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
       return chromeProxy.debugger.attach({tabId: this.tabId}, remote.version);
   };
   
-  JavaScriptDebugger.prototype.disconnect = function(channel) {
+  DemoDebugger.prototype.disconnect = function(channel) {
       this.stopDebugger();
       this.remote.disconnect(channel);
   };
 
-  return JavaScriptDebugger;
+  return DemoDebugger;
 });
