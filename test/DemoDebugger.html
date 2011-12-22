@@ -30,9 +30,9 @@ function attach(event) {
     
     // we have connected to the extension, so plugin to Orion.
     // The test driver just responds 'go' for our 'Ready' 
-    window.parent.postMessage("Ready for Orion", "*");
+    window.parent.postMessage("DemoDebugger", "*");
     
-    console.log("Plugin Ready ");
+    console.log("Plugin Ready "+window.location+" posted "+"DemoDebugger");
   });
   
   // dynamically load the chromeIframe, it will connect and fire the callback

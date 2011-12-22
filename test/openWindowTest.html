@@ -1,8 +1,8 @@
 <html>
 <head>
 <title>crx2app: OpenWindow tester</title>
-<script src="../appEnd/proxyChromePipe.js"></script>
-<script src="../lib/q/q.js"></script>
+<script src="../extension/appEnd/proxyChromePipe.js"></script>
+<script src="../extension/lib/q/q.js"></script>
 <script src="../test/openWindowTest.js"></script>
 <script>
 
@@ -38,9 +38,9 @@ function attach(event) {
     window.openWindowTest = new OpenWindowTest(connection);
 
     // we have connected to the extension, plugin to Orion
-    window.parent.postMessage("Ready for Orion", "*");
+    window.parent.postMessage("openWindowTest", "*");
     
-    console.log("Plugin Ready ");
+    console.log("Plugin Ready "+window.location);
   });
   
   // dynamically load the chromeIframe, it will connect and fire the callback

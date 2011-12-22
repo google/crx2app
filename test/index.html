@@ -15,57 +15,52 @@ function detach() {
   console.log("Test page detach on unload");
 }
 
-// simulate loading plugin
-//
-function loadPlugin(url) {
-  var iframe = document.createElement('iframe');
-  iframe.addEventListener('unload', detach, false);
-  iframe.setAttribute('src', url);
-  var elt = document.getElementById('loadPluginsHere');
-  elt.appendChild(iframe);
-  return iframe;
+function PluginController(name) {
+  this.name = name;
+  this.url = name +".html";
+  window.addEventListener('message', this.onMessage.bind(this), false);
 }
+
+PluginController.prototype = {
+  // simulate loading plugin
+  //
+  load: function() {
+    var iframe = document.createElement('iframe');
+    iframe.addEventListener('unload', detach, false);
+    iframe.setAttribute('src', this.url);
+    var elt = document.getElementById('loadPluginsHere');
+    elt.appendChild(iframe);
+    this.plugin = iframe;
+    return iframe;
+  },
+  onMessage: function(event) {
+    console.log("onMessage "+event.source.location+": "+event.data);
+    if (event.data === this.name) {
+      console.log("Test page got "+event.data);
+      var elt = document.getElementById(this.name);
+      // listen for user clicks
+      elt.addEventListener('click', this.test.bind(this), false);
+      // release the button
+      elt.removeAttribute('disabled');
+    }
+  },
+  test: function() {
+    this.plugin.contentWindow.postMessage("go", "*");
+  }
+};
 
 function attach(event) {
- // window.openWindowPlugin = loadPlugin("openWindowTest.html");
-  window.jsDebuggerPlugin = loadPlugin("DemoDebugger.html");
+  window.openWindowPlugin = new PluginController('openWindowTest');
+  window.openWindowPlugin.load();
+  window.DemoDebuggerPlugin = new PluginController('DemoDebugger');
+  window.DemoDebuggerPlugin.load();
 }
 
-// Fire the test code.
-//
-function testOpenWindow() {
-  window.openWindowPlugin.contentWindow.postMessage("go", "*");
-}
-
-function testDebugger() {
-  window.jsDebuggerPlugin.contentWindow.postMessage("go", "*");
-}
-
-function onMessage(event) {
-  console.log("Test page got "+event.data);
-
-  var openWindowTest = document.getElementById('openWindowTest');
-  // listen for user clicks
-  openWindowTest.addEventListener('click', testOpenWindow, false);
-  // release the button
-  openWindowTest.removeAttribute('disabled');
-
-  var debuggerTest = document.getElementById('debuggerTest');
-  // listen for user clicks
-  debuggerTest.addEventListener('click', testDebugger, false);
-  // release the button
-  debuggerTest.removeAttribute('disabled');
-
-}
 
 function onLoad() {
   // clean up
   window.removeEventListener('load', onLoad, false);
   
-  // listen for our plugin to be ready
-  window.addEventListener('message', onMessage, false);
-  
-  // add the plugin
   attach();
 }
 
@@ -76,9 +71,10 @@ window.addEventListener('load', onLoad, false);
 </script>
 </head>
 <body>
-<h1>appEnd test</h1>
+<h1>Test page for crx2app.</h1>
+<p> Loads iframe 'plugins' that use chromeIFrame to connect to chrome extension system.</p>
 <button id='openWindowTest' disabled >Push To Test Open Window</button>
-<button id='debuggerTest' disabled >Push To Test Debugger</button>
+<button id='DemoDebugger' disabled >Push To Test Debugger</button>
 <dl id='result'>
 </dl>
 <div id="loadPluginsHere">
