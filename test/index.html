@@ -6,6 +6,12 @@ iframe {
   padding: 50px;
   width: 80%;
 }
+.noOffer {
+  display: none;
+}
+.offer {
+  color: red;
+}
 </style>
 <script>
 
@@ -22,6 +28,15 @@ function PluginController(name) {
 }
 
 PluginController.prototype = {
+  offerExtension: function() {
+     this.extensionOfferTimeout = setTimeout(function delay(){
+       var offerExtension = document.getElementById('offerExtension');
+       offerExtension.classList.remove('noOffer');
+     }, 2000);
+  },
+  cancelExtensionOffer: function() {
+    window.clearTimeout(this.extensionOfferTimeout);
+  },
   // simulate loading plugin
   //
   load: function() {
@@ -30,6 +45,7 @@ PluginController.prototype = {
     iframe.setAttribute('src', this.url);
     var elt = document.getElementById('loadPluginsHere');
     elt.appendChild(iframe);
+    this.offerExtension();
     this.plugin = iframe;
     return iframe;
   },
@@ -37,6 +53,7 @@ PluginController.prototype = {
     console.log("onMessage "+event.source.location+": "+event.data);
     if (event.data === this.name) {
       console.log("Test page got "+event.data);
+      this.cancelExtensionOffer();
       var elt = document.getElementById(this.name);
       // listen for user clicks
       elt.addEventListener('click', this.test.bind(this), false);
@@ -73,6 +90,7 @@ window.addEventListener('load', onLoad, false);
 <body>
 <h1>Test page for crx2app.</h1>
 <p> Loads iframe 'plugins' that use chromeIFrame to connect to chrome extension system.</p>
+<p id="offerExtension" class="noOffer offer">The <a href="https://github.com/johnjbarton/crx2app" target="_blank">crx2app extension</a> is required for these tests</p>
 <button id='openWindowTest' disabled >Push To Test Open Window</button>
 <button id='DemoDebugger' disabled >Push To Test Debugger</button>
 <dl id='result'>
