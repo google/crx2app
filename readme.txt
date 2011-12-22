@@ -11,14 +11,15 @@ Install
   Use URL chrome://extensions, 
     set developer mode, 
     load unpacked extension, 
-    navigate to the clone, 
-    open it
+    navigate to the clone,
+    find the subdirectory /extension
+    open it to select this folder as the unpacked extension
     ==> the crx2app extension should be loaded
     
 Test page
       
   Open chrome://extensions 
-    Find extension crx2app
+    Find extension "crx2app"
     Click "options" link, 
       ==> You should see a yellow page
     add the URL (origin part) of your web server
