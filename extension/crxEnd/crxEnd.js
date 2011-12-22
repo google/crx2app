@@ -93,13 +93,14 @@ var crxEnd = {
       } // else not valid url origin
       sendResponse({error: "Web Origin Not Allowed", url: sender.tab.url, origin: origin});
     } // else not our caller
-    sendResponse(undefined);
     return;
   },
   
   // When the app connects its port has the name we gave it.
   onConnect: function(port) {
-    if (debugConnection) console.log("crxEnd onConnect "+port.name);
+    if (debugConnection) {
+      console.log("crxEnd onConnect "+port.name);
+    }
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
       windowsAdapter.setPort(port);
@@ -118,7 +119,9 @@ var crxEnd = {
   
   // From App 
   onMessage: function(windowsAdapter, jsonObj) {
-    if(debugMessages) console.log("crx2app/crxEnd: onMessage "+jsonObj.target+"."+jsonObj.method, jsonObj);
+    if(debugMessages) {
+      console.log("crx2app/crxEnd: onMessage "+jsonObj.target+"."+jsonObj.method, jsonObj);
+    }
     var target = this.chromeAdapters[jsonObj.target];
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
@@ -143,8 +146,10 @@ var crxEnd = {
   },
   
   onDisconnect: function(port) {
-    if (debugConnection) console.log("crxEnd onDisconnected "+port.name, port);
-    console.trace("crxEnd onDisconnected "+port.name);
+    if (debugConnection) {
+      console.log("crxEnd onDisconnected "+port.name, port);
+      console.trace("crxEnd onDisconnected "+port.name);
+    }
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
       chrome.extension.onConnect.removeListener(this.onConnect);
