@@ -7,6 +7,10 @@
 
 /*global console window*/
 
+function onClickDebug(event) {
+  saveOptions();
+}
+
 function setDropInfobar(dropInfobar) {
   var dropInfobarElt = document.getElementById('dropInfobar');
   if (dropInfobar) {
@@ -20,6 +24,12 @@ function onClickDropInfobar(event) {
   saveOptions();
 }
 
+function setDebug(options, setting) {
+  if (options[setting]) {
+    document.getElementById(setting).checked = true;
+  }
+}
+
 function restore() {
   var options = restoreOptions();
   if (options) {
@@ -30,6 +40,9 @@ function restore() {
     if (options.dropInfobar) {
       setDropInfobar(true);
     }
+    setDebug(options, 'debugConnection');
+    setDebug(options, 'debugMessages');
+    setDebug(options, 'debugWarnings');
   }
   // the default UI will work for no-options-set-yet
 }
@@ -288,6 +301,13 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
 <div>
   <div>A warning symbol will appear in the URL bar of each page controlled by any other site.</div>
   <input type='checkbox' id="dropInfobar" onclick='onClickDropInfobar(event)' />Do not show additional warning infobar<br />
+</div>
+<div id="debugOptions">
+<br />
+  <div>Console Tracing Options For Debugging This Extension</div>
+  <input type='checkbox' id="debugConnection" onclick='onClickDebug(event)' />Trace connection events<br />
+  <input type='checkbox' id="debugMessages" onclick='onClickDebug(event)' />Trace messages<br />
+  <input type='checkbox' id="debugWarnings" onclick='onClickDebug(event)' />Trace Warning IO<br />
 </div>
 </body>
 </html>

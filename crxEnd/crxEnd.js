@@ -1,7 +1,7 @@
 // See Purple/license.txt for Google BSD license
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
-/*global console ensureOrigin restoreOptions getChromeExtensionPipe*/
+/*global console ensureOrigin restoreOptions getChromeExtensionPipe debugConnection debugMessages*/
 
 /*
   Chrome extension end of crx2app communications
@@ -99,7 +99,7 @@ var crxEnd = {
   
   // When the app connects its port has the name we gave it.
   onConnect: function(port) {
-    console.log("crxEnd onConnect "+port.name);
+    if (debugConnection) console.log("crxEnd onConnect "+port.name);
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {
       windowsAdapter.setPort(port);
@@ -118,7 +118,7 @@ var crxEnd = {
   
   // From App 
   onMessage: function(windowsAdapter, jsonObj) {
-    console.log("crx2app/crxEnd: onMessage "+jsonObj.target+"."+jsonObj.method, jsonObj);
+    if(debugMessages) console.log("crx2app/crxEnd: onMessage "+jsonObj.target+"."+jsonObj.method, jsonObj);
     var target = this.chromeAdapters[jsonObj.target];
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
@@ -143,7 +143,7 @@ var crxEnd = {
   },
   
   onDisconnect: function(port) {
-    console.log("crxEnd onDisconnected "+port.name, port);
+    if (debugConnection) console.log("crxEnd onDisconnected "+port.name, port);
     console.trace("crxEnd onDisconnected "+port.name);
     var windowsAdapter = this.windowsAdaptersByName[port.name];
     if (windowsAdapter) {

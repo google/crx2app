@@ -18,7 +18,7 @@ function PostSource(path) {
 
     postMessage: function(msgObj) {
       if (this.port) {
-        console.log("PostSource.postMessage "+this.port.name+' '+msgObj.source+"."+msgObj.method, msgObj);
+        if (debugMessages) console.log("PostSource.postMessage "+this.port.name+' '+msgObj.source+"."+msgObj.method, msgObj);
         this.port.postMessage(msgObj);
       } else {// else our port is not open
         console.error("PostSource.postMessage no port for "+path);
@@ -48,7 +48,9 @@ function PostSource(path) {
     onResponse: function(serial, jsonObj, result) {
       if ( this.noErrorPosted({serial: serial}) ) {
         this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [result], request: jsonObj});
-      } 
+        return true;
+      }
+      return false;
     }
   };
 }

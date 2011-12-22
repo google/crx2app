@@ -21,6 +21,15 @@ function saveOptions() {
   var dropInfobarElt = document.getElementById('dropInfobar');
   options.dropInfobar = dropInfobarElt.checked;
   
+  var debugConnection = document.getElementById('debugConnection');
+  options.debugConnection = debugConnection.checked;
+
+  var debugMessages = document.getElementById('debugMessages');
+  options.debugMessages = debugMessages.checked;
+
+  var debugWarnings = document.getElementById('debugWarnings');
+  options.debugWarnings = debugWarnings.checked;
+  
   var stringified = JSON.stringify(options);
   window.localStorage.setItem('options', stringified);
 }

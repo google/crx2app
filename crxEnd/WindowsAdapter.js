@@ -62,7 +62,7 @@ WindowsAdapter.prototype = {
   // callback from chrome.windows.create
   // @param http://code.google.com/chrome/extensions/dev/windows.html#type-Window
   onCreated: function(serial, win) {
-    console.log('WindowsAdapter.onCreated', arguments);
+    if (debugMessages) console.log('WindowsAdapter.onCreated', arguments);
     if (!win) {
       return; // incognito windows are not supported because we can't track them
     }
@@ -106,11 +106,11 @@ WindowsAdapter.prototype = {
 
   //---------------------------------------------------------------------------------------------------------
   _connect: function() {
-    console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
+    if (debugConnection) console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
   },
   
   _disconnect: function() {
-    console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin);
+    if (debugConnection) console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin);
     this.setPort(null); // prevent any more messages
     chrome.windows.onCreated.removeListener(this.onCreated);
     chrome.windows.onRemoved.removeListener(this.onRemoved);

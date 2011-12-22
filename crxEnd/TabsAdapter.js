@@ -11,7 +11,6 @@ function TabsAdapter(windowsAdapter) {
   
   var portDelegate = new PostSource(TabsAdapter.path);
   Object.keys(portDelegate).forEach(function(key) {
-  console.log("portDelegate "+key);
     this[key] = portDelegate[key].bind(windowsAdapter);   
   }.bind(this));
   
@@ -59,7 +58,7 @@ TabsAdapter.prototype = {
   // Events
   
   onCreated: function(chromeTab) {
-    console.log("TabsAdapter onCreated", chromeTab);
+    if (debugMessages) console.log("TabsAdapter onCreated", chromeTab);
     // The barrier for creation is the target window 
     var tabAdapter = this;
     this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
@@ -72,9 +71,9 @@ TabsAdapter.prototype = {
   
   putUpInfobar: function(tabId) {
     var details = {tabId: tabId, path: "crxEnd/warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
-    console.log("putUpInfoBar ready", details);
+    if (debugWarnings) console.log("putUpInfoBar ready", details);
     chrome.experimental.infobars.show(details, function(win){
-      console.log("putUpInfobar done", win);
+      if (debugWarnings) console.log("putUpInfobar done", win);
     });
   },
   
@@ -84,7 +83,7 @@ TabsAdapter.prototype = {
     }
     chrome.pageAction.setTitle({tabId: tabId, title: "This tab controlled by "+this.windowsAdapter.debuggerOrigin});
     chrome.pageAction.show(tabId);
-    console.log("TabsAdapter warnAttach on tabId: "+tabId);
+    if (debugWarnings) console.log("TabsAdapter warnAttach on tabId: "+tabId);
   },
   
   // callback from update()
@@ -116,7 +115,7 @@ TabsAdapter.prototype = {
       if (chrome.extension.lastError) {
         console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
       } else {
-        console.log("crx2app onPageActionClicked update window complete", win);
+        if (debugWarnings) console.log("crx2app onPageActionClicked update window complete", win);
       }
     });
     var updateProperties = {active: true, highlighted: true};
@@ -124,7 +123,7 @@ TabsAdapter.prototype = {
       if (chrome.extension.lastError) {
         console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
       } else {
-        console.log("crx2app onPageActionClicked update complete", tab);
+        if (debugWarnings) console.log("crx2app onPageActionClicked update complete", tab);
       }
     });
   },
