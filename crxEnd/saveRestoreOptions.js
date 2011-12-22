@@ -17,6 +17,10 @@ function saveOptions() {
       options.origins.push(origin);
     }
   }
+  
+  var dropInfobarElt = document.getElementById('dropInfobar');
+  options.dropInfobar = dropInfobarElt.checked;
+  
   var stringified = JSON.stringify(options);
   window.localStorage.setItem('options', stringified);
 }

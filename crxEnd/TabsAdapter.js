@@ -16,8 +16,8 @@ function TabsAdapter(windowsAdapter) {
   }.bind(this));
   
   this._bindListeners();
-  
-  this.useInfobar = true;
+  var options = restoreOptions();
+  this.useInfobar = !options.dropInfobar;
   this.api = ['create', 'update', 'remove'];
   this._connect();
 }
