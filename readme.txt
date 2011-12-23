@@ -1,5 +1,8 @@
 crx2app A Barrier Proxy giving Web app limited access to Chrome Browser extensions.
 
+// Google BSD license http://code.google.com/google_bsd_license.html
+// Copyright 2011 Google Inc. johnjbarton@google.com
+
 Install
   One of these two:
     A) start chrome browser on the command line with --enable-experimental-extension-apis

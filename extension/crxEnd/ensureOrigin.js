@@ -1,3 +1,6 @@
+// Google BSD license http://code.google.com/google_bsd_license.html
+// Copyright 2011 Google Inc. johnjbarton@google.com
+
 // ftp://ftp.rfc-editor.org/in-notes/rfc3986.txt Appendix B
 var reURIString = "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?";
 var reURI = new RegExp(reURIString);

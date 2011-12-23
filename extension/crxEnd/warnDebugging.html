@@ -13,14 +13,14 @@ body {
 }
 </style>
 <script>
-window.addEventListener('load', onLoad, false);
+/*globale window console */
+// Google BSD license http://code.google.com/google_bsd_license.html
+// Copyright 2011 Google Inc. johnjbarton@google.com
 
-function onLoad() {
-  try { 
-    attachDomain();
-  } catch (exc) {
-    console.error("warnDebugging fails "+exc);
-  }
+
+function appendDomain(domain) {
+  var elt = document.getElementById('warning');
+  elt.innerHTML += " from " + domain;
 }
 
 function attachDomain() {
@@ -43,10 +43,16 @@ function attachDomain() {
   } // else no params specified, use default msg
 }
 
-function appendDomain(domain) {
-  var elt = document.getElementById('warning');
-  elt.innerHTML += " from " + domain;
+function onLoad() {
+  try { 
+    attachDomain();
+  } catch (exc) {
+    console.error("warnDebugging fails "+exc);
+  }
 }
+
+window.addEventListener('load', onLoad, false);
+
 </script>
 </head>
 <body>
