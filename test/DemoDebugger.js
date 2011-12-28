@@ -2,20 +2,14 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-console.log('DemoDebugger.js loaded');
-define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
-  function(Q, JSONMarshall, remote, chrome) {
+define(  ['ScriptDebuggerProxy'], 
+  function(ScriptDebuggerProxy) {
   
-  var DemoDebugger = function(tabId) {
-    this.tabId = tabId;
-  };
+  var DemoDebugger = ScriptDebuggerProxy.extend({
   
-  //---------------------------------------------------------------------------------------------
-  //
-    
-  // Implement Remote.events
-  DemoDebugger.prototype.remoteResponseHandlers = {
-    Debugger: {
+    // Implement Remote.events
+    eventHandlers: {
+      Debugger: {
         breakpointResolved: function(breakpointId, location) {
           console.log("DemoDebugger", arguments);
         },
@@ -43,55 +37,14 @@ define(  ['lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'],
           console.log("DemoDebugger", arguments);
         }
       }
-  };
+    },
+
+    initialize: function() {
+      ScriptDebuggerProxy.initialize.apply(this, [this.eventHandlers]);
+    }
   
-  /*
-   * create debugger for url in a new Chrome window 
-   * @param url, string URL
-   * @param connection, result from getChromeExtensionPipe
-   * @param chromeProxy, object representing "chrome" extension API
-   * @return promise for DemoDebugger  
-   */
-  DemoDebugger.openInDebug = function(url, connection, chromeProxy) {
-    var deferred = Q.defer();
-    chromeProxy.windows.create({},  function onCreated(win) {
-      console.log("DemoDebugger openInDebug onCreated callback, trying connect", win);
-      var tabId = win.tabs[0].id;
-      
-      var jsDebugger = new DemoDebugger(tabId);
-    
-      var connected = jsDebugger.connect(chromeProxy);
-      Q.when(connected, function(connected) {
-        console.log("DemoDebugger openInDebug connected, send enable", connected);
-        var enabled = jsDebugger.remote.Debugger.enable();
-    
-        Q.when(enabled, function(enabled) {
-          console.log("DemoDebugger openInDebug enabled", enabled);
-          chromeProxy.tabs.update(tabId, {url: url}, function(tab) {
-            return deferred.resolve(jsDebugger);
-          });
-        }).end();
-      }).end();
-      
-    });
-    return deferred.promise;
-  };
-  
-  //---------------------------------------------------------------------------------------------
-  
-  DemoDebugger.prototype.connect = function(chromeProxy) {
-      this.remote = Object.create(JSONMarshall);
-      this.remote.responseHandlers = this.remoteResponseHandlers;
-      this.remote.jsonHandlers = this.remote.getEventHandlers(remote, this.remote);
-      // We prefix the argument list with our tabId
-      this.remote.build2LevelPromisingCalls(remote, this.remote, chromeProxy.getConnection(), [{tabId: this.tabId}]);
-      return chromeProxy.debugger.attach({tabId: this.tabId}, remote.version);
-  };
-  
-  DemoDebugger.prototype.disconnect = function(channel) {
-      this.stopDebugger();
-      this.remote.disconnect(channel);
-  };
+  });
+
 
   return DemoDebugger;
 });

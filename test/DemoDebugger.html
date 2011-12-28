@@ -64,7 +64,7 @@ function onMessage(event) {
       paths: {
         "../rpc": "../extension/rpc",
         "browser/remote": "extension/rpc",
-        "lib/q":          "../extension/lib/q"
+        "lib":          "../extension/lib"
       }
     }); 
 
@@ -73,9 +73,10 @@ function onMessage(event) {
    };
 
    require(['DemoDebugger', 'ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
-     var chromeProxy = new ChromeProxy(connection, {});
-     var DemoDebugger = DemoDebugger.openInDebug("http://www.google.com", connection, chromeProxy);
-     Q.when(DemoDebugger, testConnection, failConnection).end();
+     var chromeProxy = ChromeProxy.new(connection, {});
+     var jsDebugger = DemoDebugger.new();
+     jsDebugger.openInDebug("http://www.google.com", chromeProxy);
+     Q.when(jsDebugger, testConnection, failConnection).end();
    });
   }
 }
