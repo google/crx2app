@@ -182,9 +182,11 @@ define(['lib/q/q'], function (Q) {
   };
   
   // return two level dictionary of functions for each domain's events.
-  JSONMarshall.getEventHandlers = function(iface, impl) {
+  // iface {api: {functions}, events: {functions}, types: {objects}}
+  // impl: becomes |this| for handlers
+  // eventHandlers: {Debugger: {functions}, Console: {functions}
+  JSONMarshall.getEventHandlers = function(iface, impl, eventHandlers) {
     var jsonHandlers = {}; // by domain and function name
-    var responseHandlerObject = impl.responseHandlers;  // {Debugger:{functions}, Console:{functions}}
     var events = iface.events;
     var domainNames = Object.keys(events);
     domainNames.forEach(function buildDomainResponse(domainName) {
@@ -192,7 +194,7 @@ define(['lib/q/q'], function (Q) {
       var handlerNames = Object.keys(events[domainName]);
       handlerNames.forEach(function buildHandler(handlerName) {
         var handlerSpec = events[domainName][handlerName]; // an empty function
-        var handlersByDomain = responseHandlerObject[domainName];
+        var handlersByDomain = eventHandlers[domainName];
         if (!handlersByDomain) {
           return;
         }
