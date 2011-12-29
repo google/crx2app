@@ -9,8 +9,8 @@ function(      MetaObject,         Q,          JSONMarshall,          chrome) {
     initialize: function(connection, eventHandlers) {
       this.connection = connection;
     
-      this.windows = {};
-      this.jsonHandlers = this.getEventHandlers(chrome.windows, this.windows, eventHandlers);
+      this.windows = eventHandlers;
+      this.buildEventHandlers(chrome.windows.events, this.windows);
       this.buildPromisingCalls(chrome.windows, this.windows, connection);
 
       this.tabs = {};

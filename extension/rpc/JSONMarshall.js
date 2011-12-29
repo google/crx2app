@@ -153,7 +153,7 @@ define(['lib/q/q'], function (Q) {
         if (method) {
           var handler = this.jsonHandlers.hasOwnProperty(method) && this.jsonHandlers[method];
           if (handler) {
-            handler.apply(this, data.params);
+            handler.apply(this, [data.params, data.p_id]);
           } else {
             console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
           }
@@ -191,42 +191,48 @@ define(['lib/q/q'], function (Q) {
     } // else another remote may have created the request
   };
   
-  // return two level dictionary of functions for each domain's events.
-  // iface {api: {functions}, events: {functions}, types: {objects}}
-  // impl: becomes |this| for handlers
-  // eventHandlers: {Debugger: {functions}, Console: {functions}
-  JSONMarshall.getEventHandlers = function(iface, impl, eventHandlers) {
-    var jsonHandlers = {}; // by domain and function name
-    var events = iface.events;
-    var domainNames = Object.keys(events);
-    domainNames.forEach(function buildDomainResponse(domainName) {
-      jsonHandlers[domainName] = {};
-      var handlerNames = Object.keys(events[domainName]);
-      handlerNames.forEach(function buildHandler(handlerName) {
-        var handlerSpec = events[domainName][handlerName]; // an empty function
-        var handlersByDomain = eventHandlers[domainName];
-        if (!handlersByDomain) {
-          return;
-        }
-        var handler = handlersByDomain[handlerName];  // implementation function of
-        if (!handler) {
-          console.trace("JSONMarshall");
-          console.error("JSONMarshall, no handler for "+domainName+"."+handlerName, JSONMarshall);
-          throw new Error("JSONMarshall, no handler for "+domainName+"."+handlerName);
-        }
-        var m = reParameters.exec(handlerSpec.toString());
-        var params = m[1].split(',');
-        handler.parameters = [];
-        for (var i = 0; i < params.length; i++) {
-          var param = params[i].trim();
-          if (param) {
-            handler.parameters[i] = param;
-          }
-        }
-        jsonHandlers[domainName][handlerName] = marshallForHandler(impl, handler);
-      }.bind(this));
+  // The chrome.debugger API has 'domains' like Console, Debugger. 
+  // Each domain has functions as properties.
+  // 
+  JSONMarshall.flattenDomains = function(obj) {
+    var flatObj = {};
+    Object.keys(obj).forEach(function flattenDomain(domainName) {
+      var domain = obj[domainName];
+      Object.keys(domain).forEach(function buildProperty(name) {
+        flatObj[domainName+'.'+name] = domain[name];
+      });
     });
-    return jsonHandlers;
+    return flatObj;
+  };
+  
+  JSONMarshall.addHandlerParameters = function(handler, handlerSpec) {
+    var m = reParameters.exec(handlerSpec.toString());
+    var params = m[1].split(',');
+    handler.parameters = [];
+    for (var i = 0; i < params.length; i++) {
+      var param = params[i].trim();
+      if (param) {
+        handler.parameters[i] = param;
+      }
+    }
+  };
+  
+  // return: dictionary of functions accepting json objects, calling impl handlers
+  // iface: empty functions for each possible method name coming over JSON
+  // impl: defn for some of the iface entries becomes |this| for handlers
+  // eventHandlers: {Debugger: {functions}, Console: {functions}}
+  JSONMarshall.buildEventHandlers = function(iface, impl) {
+    this.jsonHandlers = {}; 
+    var handlerNames = Object.keys(iface);
+    handlerNames.forEach(function buildHandler(handlerName) {
+      var handlerSpec = iface[handlerName]; // an empty function
+      var handler = impl[handlerName];  // implementation function of
+      if (handler) {
+        this.addHandlerParameters(handler, handlerSpec);
+        this.jsonHandlers[handlerName] = marshallForHandler(impl, handler);
+      }
+    }.bind(this));
+    return this.jsonHandlers;
   };
    
   // Walk the API and implement each function to send over channel.

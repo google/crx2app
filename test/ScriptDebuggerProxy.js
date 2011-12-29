@@ -9,8 +9,8 @@ define(  ['lib/MetaObject', 'lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '
   var ScriptDebuggerProxy = MetaObject.extend(JSONMarshall, {
   
     initialize: function(eventHandlers) {
-      this.remote = {};
-      this.jsonHandlers = this.getEventHandlers(remote, this.remote, eventHandlers);
+      this.remote = eventHandlers;
+      this.buildEventHandlers(this.flattenDomains(remote.events), this.flattenDomains(this.remote));
     },
 
     promiseAttach: function(tabId, chromeProxy) {
