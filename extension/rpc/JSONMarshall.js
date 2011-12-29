@@ -142,14 +142,24 @@ define(['lib/q/q'], function (Q) {
   };
   
   JSONMarshall.recvResponse = function(data) {
-  console.log("JSONMarshal.recvResponse ", data);
+    console.log("JSONMarshal.recvResponse ", data);
     if (data && data.serial) {
       this.recvResponseData(data);
     } else { // not a response
-      if (data.method === 'onError') {
+      var method = data.method;
+      if (method === 'onError') {
         console.error("JSONMarshal.recvResponse ERROR "+data.source+':'+data.params[0]);
       } else {
-        console.error("JSONMarshal.recvResponse dropped data, no serial ", data);
+        if (method) {
+          var handler = this.jsonHandlers.hasOwnProperty(method) && this.jsonHandlers[method];
+          if (handler) {
+            handler.apply(this, data.params);
+          } else {
+            console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
+          }
+        } else {
+          console.error("JSONMarshal.recvResponse dropped data, no .serial and  .method ", data);
+        }
       }
     }
   };
