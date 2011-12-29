@@ -25,6 +25,11 @@ function PluginController(name) {
   this.name = name;
   this.url = name +".html";
   window.addEventListener('message', this.onMessage.bind(this), false);
+  var elt = document.getElementById(this.name);
+  // listen for user clicks
+  elt.addEventListener('click', this.test.bind(this), false);
+  // release the button
+  elt.removeAttribute('disabled');
 }
 
 PluginController.prototype = {
@@ -39,7 +44,19 @@ PluginController.prototype = {
   },
   // simulate loading plugin
   //
-  load: function() {
+  load: function(callback) {
+    if (!this.loaded) {
+      var iframe = this._load();
+      iframe.addEventListener('load', function() {
+        this.loaded = true;
+        callback();
+      }.bind(this), false);
+    } else {
+      callback();
+    }
+  },
+  
+  _load: function() {
     var iframe = document.createElement('iframe');
     iframe.addEventListener('unload', detach, false);
     iframe.setAttribute('src', this.url);
@@ -54,23 +71,18 @@ PluginController.prototype = {
     if (event.data === this.name) {
       console.log("Test page got "+event.data);
       this.cancelExtensionOffer();
-      var elt = document.getElementById(this.name);
-      // listen for user clicks
-      elt.addEventListener('click', this.test.bind(this), false);
-      // release the button
-      elt.removeAttribute('disabled');
     }
   },
   test: function() {
-    this.plugin.contentWindow.postMessage("go", "*");
+    this.load(function() {
+      this.plugin.contentWindow.postMessage("go", "*");
+    }.bind(this));
   }
 };
 
 function attach(event) {
   window.openWindowPlugin = new PluginController('openWindowTest');
-  window.openWindowPlugin.load();
   window.DemoDebuggerPlugin = new PluginController('DemoDebugger');
-  window.DemoDebuggerPlugin.load();
 }
 
 
