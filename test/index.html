@@ -67,10 +67,11 @@ PluginController.prototype = {
     return iframe;
   },
   onMessage: function(event) {
-    console.log("onMessage "+event.source.location+": "+event.data);
     if (event.data === this.name) {
-      console.log("Test page got "+event.data);
+      console.log("Test page got ack "+event.data);
       this.cancelExtensionOffer();
+    } else {
+      console.log("onMessage "+event.source.location+": ", event.data);
     }
   },
   test: function() {
