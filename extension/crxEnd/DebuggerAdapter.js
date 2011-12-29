@@ -14,6 +14,8 @@ function makeDebuggerAdapter(chrome, PostSource, remote) {
 
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
+  this.windowsAdapter.setDebugAdapter(this);   // backpointer for disconnect
+
   this.debuggeeTabIds = [];
   
   var portDelegate = new PostSource(DebuggerAdapter.path);
@@ -23,6 +25,7 @@ function DebuggerAdapter(windowsAdapter) {
   
   this._bindListeners();
   this._buildAPI(remote);
+  this.addListeners();
 }
 
 DebuggerAdapter.path = 'chrome.debugger';
@@ -39,14 +42,10 @@ DebuggerAdapter.prototype = {
       }
       this.debuggeeTabIds.push(debuggee.tabId);
     
-      // prepare for events from chrome.debugger
-      chrome.experimental.debugger.onEvent.addListener(this.onEvent);
+      this.addListeners();
       
       // Setup the connection to the devtools backend
       chrome.experimental.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
-      
-      // detach if the tab is removed
-      chrome.tabs.onRemoved.addListener(this.onRemoved);
     },
     
     sendCommand: function(method, serial, debuggee, params) {
@@ -66,15 +65,9 @@ DebuggerAdapter.prototype = {
       if (!this._checkDebuggee(debuggee)) {
         return; 
       }
-      chrome.experimental.debugger.onEvent.removeListener(this.onEvent);    
-    
       chrome.experimental.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
-      var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
-      if (index > -1) {
-        this.debuggeeTabIds.splice(index, 1);
-      } else {
-        console.error("DebuggerAdapter detach ERROR, no such debuggee tabId "+debuggee.tabId);
-      }
+      
+      this.onRemoved(debuggee.tabId, {});
     }
   },
   
@@ -105,16 +98,36 @@ DebuggerAdapter.prototype = {
   onRemoved: function(tabId, removeInfo) {
     var index = this.debuggeeTabIds.indexOf(tabId);
     if (index > -1) {
-      this.chromeWrappers.detach.apply(this, [undefined, {tabId: tabId}]);
+      this.debuggeeTabIds.splice(index, 1);
     } // else not ours
   },
-  
+  //---------------------------------------------------------------------------
+  // class methods
   _checkDebuggee: function(debuggee) {
     if (!this.windowsAdapter.isAccessibleTab(debuggee.tabId)) {
        this.postError("Debuggee tabId "+debuggee.tabId+" is not accessible");
        return false;
     }
 	return true;
+  },
+  
+  disconnect: function() {
+    this.debuggeeTabIds.forEach(function (tabId) {
+      this.chromeWrappers.detach(undefined, tabId);
+    });
+    this.removeListeners();
+  },
+  
+  addListeners: function() {
+      // prepare for events from chrome.debugger
+      chrome.experimental.debugger.onEvent.addListener(this.onEvent);
+      // detach if the tab is removed
+      chrome.tabs.onRemoved.addListener(this.onRemoved);
+  },
+  
+  removeListeners: function() {
+      chrome.experimental.debugger.onEvent.removeListener(this.onEvent);
+      chrome.tabs.onRemoved.removeListener(this.onRemoved);
   },
   
   // Call exactly once

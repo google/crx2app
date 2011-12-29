@@ -53,10 +53,23 @@ WindowsAdapter.prototype = {
     return (this.chromeTabIds.indexOf(tabId) > -1);
   },
   
-  // Called during construction, for onCreated
+  // Called during construction, for onCreated, and disconnect
   setTabAdapter: function(tabAdapter) {
     this.tabAdapter = tabAdapter; 
   },
+  
+  setDebugAdapter: function(debugAdapter) {
+    this.debugAdapter = debugAdapter;
+  },
+  
+  addTab: function(tab) {
+    this.chromeTabIds.push(tab.id);
+  },
+  
+  removeTab: function(index) {
+    this.chromeTabIds.splice(index, 1);
+  },
+
   
   //------------------------------------------------------------------------------------ 
   // callback from chrome.windows.create
@@ -112,6 +125,12 @@ WindowsAdapter.prototype = {
   _disconnect: function() {
     if (debugConnection) console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin);
     this.setPort(null); // prevent any more messages
+    if (this.tabAdapter) {
+      this.tabAdapter.disconnect();
+    }
+    if (this.debugAdatper) {
+      this.debugAdapter.disconnect();
+    }
     chrome.windows.onCreated.removeListener(this.onCreated);
     chrome.windows.onRemoved.removeListener(this.onRemoved);
   },

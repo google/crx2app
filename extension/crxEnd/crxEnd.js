@@ -34,7 +34,7 @@ var crxEnd = {
   },
   
   detach: function() {
-    chrome.extension.onRequest.removerListener(this.onRequest);
+    chrome.extension.onRequest.removeListener(this.onRequest);
     this.adapterFactory['chrome.tabs']._disconnect();
   },
   

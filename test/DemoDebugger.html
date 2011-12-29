@@ -27,8 +27,11 @@ function attach(event) {
 
   // listen for a connection.
   connection.attach(function onConnectedToChrome() {
-    
     // we have connected to the extension, so plugin to Orion.
+      
+    // listen for fake-Orion to tell us to do something
+    window.addEventListener('message', onMessage, false);
+
     // The test driver just responds 'go' for our 'Ready' 
     window.parent.postMessage("DemoDebugger", "*");
     
@@ -75,10 +78,8 @@ function onMessage(event) {
    require(['DemoDebugger', 'ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
      var chromeProxy = ChromeProxy.new(connection, {});
      var jsDebugger = DemoDebugger.new();
-     Q.when(jsDebugger, function(jsDebugger) {
-       var page = jsDebugger.openInDebug("http://www.google.com", chromeProxy);
-       Q.when(page, testConnection, failConnection).end();
-     }, failConnection).end();
+     var page = jsDebugger.openInDebug("http://www.google.com", chromeProxy);
+     Q.when(page, testConnection, failConnection).end();
    });
   }
 }
@@ -86,9 +87,6 @@ function onMessage(event) {
 function onLoad() {
   // clean up
   window.removeEventListener('load', onLoad, false);
-  
-  // listen for fake-Orion to tell us to do something
-  window.addEventListener('message', onMessage, false);
   
   // connect to the chromeIframe
   attach();

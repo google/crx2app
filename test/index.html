@@ -13,6 +13,7 @@ iframe {
   color: red;
 }
 </style>
+<script src="../extension/lib/q/q.js"></script>
 <script>
 
 /*global console window */
@@ -24,7 +25,7 @@ function detach() {
 function PluginController(name) {
   this.name = name;
   this.url = name +".html";
-  window.addEventListener('message', this.onMessage.bind(this), false);
+
   var elt = document.getElementById(this.name);
   // listen for user clicks
   elt.addEventListener('click', this.test.bind(this), false);
@@ -46,10 +47,13 @@ PluginController.prototype = {
   //
   load: function(callback) {
     if (!this.loaded) {
+      console.log("testDriver loading iframe");
       var iframe = this._load();
+      this.onIntroduction = this.onIntroduction.bind(this, callback);
+      window.addEventListener('message', this.onIntroduction, false);
       iframe.addEventListener('load', function() {
         this.loaded = true;
-        callback();
+        console.log("testDriver loaded iframe");
       }.bind(this), false);
     } else {
       callback();
@@ -66,16 +70,25 @@ PluginController.prototype = {
     this.plugin = iframe;
     return iframe;
   },
-  onMessage: function(event) {
+  
+  onIntroduction: function(callback, event) {
     if (event.data === this.name) {
       console.log("Test page got ack "+event.data);
       this.cancelExtensionOffer();
-    } else {
-      console.log("onMessage "+event.source.location+": ", event.data);
+      window.removeEventListener('message', this.onIntroduction, false);
+      window.addEventListener('message', this.onMessage.bind(this), false);
+
+      callback();
     }
   },
+
+  onMessage: function(event) {
+      console.log("onMessage "+event.source.location+": ", event.data);
+  },
+  
   test: function() {
     this.load(function() {
+      console.log("testDriver posting go");
       this.plugin.contentWindow.postMessage("go", "*");
     }.bind(this));
   }

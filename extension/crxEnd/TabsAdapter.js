@@ -63,7 +63,7 @@ TabsAdapter.prototype = {
     var tabAdapter = this;
     this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
       // |this| is windowsAdapter inside of barrier()
-      this.chromeTabIds.push(chromeTab.id);
+      this.addTab(chromeTab);
       this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: [chromeTab]});
       tabAdapter.warnAttached(chromeTab.id);     
     });
@@ -104,7 +104,7 @@ TabsAdapter.prototype = {
   
   onRemoved: function(tabId, removeInfo) {
     this.barrier(tabId, arguments, function(tabId, removeInfo, index) {
-      this.windowsAdapter.chromeTabIds.splice(index, 1);
+      this.windowsAdapter.removeTab(index);
       this.postMessage({source: this.getPath(), method: 'onRemoved', params:[tabId, removeInfo]});
     });
   },
@@ -148,7 +148,7 @@ TabsAdapter.prototype = {
     // chrome.tabs functions available to client WebApps
   },
 
-  _disconnect: function() {
+  disconnect: function() {
     chrome.tabs.onCreated.removeListener(this.onCreated);  
     chrome.tabs.onUpdated.removeListener(this.onUpdated);
     chrome.tabs.onRemoved.removeListener(this.onRemoved);
