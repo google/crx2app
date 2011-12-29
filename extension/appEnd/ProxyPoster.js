@@ -25,13 +25,13 @@ ProxyPoster.prototype = {
       window.addEventListener('message', this.onIntroduction, false);
       
       // prepare from messages from chrome
-      this.attachment.addListener(this.fromExtnToOther);
+      this.attachment.addListener(this.fromAppToOther);
       
       // create a handShake from the attachment 
       this.handShake = this.attachment.NAME + " " + this.attachment.VERSION;
       
       // signal other window we are ready
-      this.fromExtnToOther(this.handShake);
+      this.fromAppToOther(this.handShake);
       
     } catch(exc) {
       console.error(exc);
@@ -43,8 +43,8 @@ ProxyPoster.prototype = {
   },
   
   // up to otherWindow
-  fromExtnToOther: function(msgObj) {
-    console.log("ProxyPoster fromExtnToOther", msgObj);
+  fromAppToOther: function(msgObj) {
+    console.log("ProxyPoster fromAppToOther", msgObj);
     this.otherWindow.postMessage(msgObj, this.targetOrigin);
   },
   
@@ -57,7 +57,7 @@ ProxyPoster.prototype = {
       window.addEventListener('message', this.fromOtherWindow, false);
       
       // echo to close loop with sender
-      this.fromExtnToOther(event.data);
+      this.fromAppToOther(event.data);
     } else {
        return; // not for us
     }
@@ -72,7 +72,7 @@ ProxyPoster.prototype = {
   // call once per instance only
   _bindListeners: function() {
     this.fromOtherWindow = this.fromOtherWindow.bind(this);
-    this.fromExtnToOther = this.fromExtnToOther.bind(this);
+    this.fromAppToOther = this.fromAppToOther.bind(this);
     this.onIntroduction = this.onIntroduction.bind(this);
   }
 };
