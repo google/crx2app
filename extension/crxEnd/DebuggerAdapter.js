@@ -20,7 +20,6 @@ function DebuggerAdapter(windowsAdapter) {
   Object.keys(portDelegate).forEach(function(key) {
     this[key] = portDelegate[key].bind(windowsAdapter);   
   }.bind(this));
-  this.setPort( windowsAdapter.port );
   
   this._bindListeners();
   this._buildAPI(remote);
