@@ -29,8 +29,9 @@ function getChromeExtensionPipe(iframeDomain){
     // Get the source window and listen to it
     //
     onAttach: function(callback, event) {
-      console.log("proxyChromePipe onAttach called by "+event.origin);
       if (event.origin === iframeDomain) {
+        console.log("proxyChromePipe onAttach called by "+event.origin);
+        
         // Remember our partner
         this.source = event.source; 
 
@@ -65,12 +66,12 @@ function getChromeExtensionPipe(iframeDomain){
     },
     
     fromExtnToApp: function(event) {
-      console.log("crx2app.appEnd.fromExtnToApp in "+window.location, event);
-      if (this.listener) {
-        if (event.origin === iframeDomain) {
+      if (event.origin === iframeDomain) {
+        console.log("crx2app.appEnd.fromExtnToApp in "+window.location, event);
+        if (this.listener) {
           this.listener(event.data);
-        } // else not for us
-      } // else no listener
+        } // else no listener
+      } // else not for us
     },
 
     fromAppToExtn: function(msgObj) {
