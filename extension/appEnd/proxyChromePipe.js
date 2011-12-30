@@ -17,6 +17,7 @@ function getChromeExtensionPipe(iframeDomain){
     // so we can be listening for its introduction message.
     // do not call .addListener or .postMessage until the callback fires.
     attach: function(callback) {
+      this.listeners = [];
       this.onIntroduction = this.onAttach.bind(this, callback);
       window.addEventListener('message', this.onIntroduction, false);
       console.log("proxyChromePipe awaiting introduction from "+iframeDomain);
@@ -39,14 +40,15 @@ function getChromeExtensionPipe(iframeDomain){
         window.removeEventListener('message', this.onIntroduction, false);
         
         // the proxying function will callback on the reply from the chromeIframe
-        this.listener = function(data) {
-          // do the callback dance one time only, clear in case the callback does not set listener.
-          delete this.listener;
+        this.onExtnIntro = function(data) {
+          // do the callback dance one time only
+          this.removeListener(this.onExtnIntro);
 
            // signal the app that we are ready
           callback();
           
         }.bind(this);
+        this.addListener(this.onExtnIntro);
 
         // rebind the listener to proxying function
         window.addEventListener('message', this.fromExtnToApp, false);
@@ -59,25 +61,41 @@ function getChromeExtensionPipe(iframeDomain){
     // Our port closed
     onDisconnect: function() {
       this.fromExtnToApp({source:'crx2app', method: 'onDisconnect', params:[]});
-      delete this.listener;
+    },
+
+    //--------------------------------------------------------------------------------------
+    
+    hasListener: function(listener) {
+      return (this.listeners.indexOf(listener) + 1);
     },
 
     addListener: function(listener) {
-      this.listener = listener; // may be null
-      console.log("proxyChromePipe addListener "+listener);
+      if ( listener && !this.hasListener(listener) ) { 
+        this.listeners.push(listener);
+        console.log("proxyChromePipe addListener "+this.listeners.length+": "+listener);
+      }
     },
+    
+    removeListener: function(listener) {
+      var number = this.hasListener(listener);
+      if (number) {
+        this.listeners.splice( (number - 1), 1);
+      }
+    },
+    
+    //--------------------------------------------------------------------------------------    
     
     fromExtnToApp: function(event) {
       if (event.origin === iframeDomain) {
         console.log("crx2app.appEnd.fromExtnToApp in "+window.location, event);
-        if (this.listener) {
-          this.listener(event.data);
-        } // else no listener
+        this.listeners.forEach(function(listener) {
+          listener(event.data);
+        }); 
       } // else not for us
     },
 
     fromAppToExtn: function(msgObj) {
-      if (!this.listener) {
+      if (!this.listeners.length) {
         console.error("crx2app/appEnd/proxyChromePipe.fromAppToExtn: sending but not listening");
       }
       console.log("proxyChromePipe postMessage "+iframeDomain, msgObj);
@@ -86,22 +104,18 @@ function getChromeExtensionPipe(iframeDomain){
     
     _bindListeners: function() {
       this.onDisconnect = this.onDisconnect.bind(this);
-      this.fromExtnToApp = this.fromExtnToApp.bind(this);
-      
-      this.attach = this.attach.bind(this);
-      this.detach = this.detach.bind(this);
-      this.fromAppToExtn = this.fromAppToExtn.bind(this);
-      this.addListener = this.addListener.bind(this);
+      this.fromExtnToApp = this.fromExtnToApp.bind(this);      
     }
   };
   
   proxyEnd._bindListeners();
   
   return {  // these functions are bound to proxyEnd, not the return object
-    attach: proxyEnd.attach,
-    postMessage: proxyEnd.fromAppToExtn,
-    addListener: proxyEnd.addListener,
-    detach: proxyEnd.detach,
+    attach: proxyEnd.attach.bind(proxyEnd),
+    postMessage: proxyEnd.fromAppToExtn.bind(proxyEnd),
+    addListener: proxyEnd.addListener.bind(proxyEnd),
+    removeListener: proxyEnd.removeListener.bind(proxyEnd),
+    detach: proxyEnd.detach.bind(proxyEnd),
     NAME: getChromeExtensionPipe.NAME,
     VERSION: getChromeExtensionPipe.VERSION
   };
