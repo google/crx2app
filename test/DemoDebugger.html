@@ -65,9 +65,8 @@ function onMessage(event) {
     // dynamically load the debugger code
     require({
       paths: {
-        "../rpc": "../extension/rpc",
-        "browser/remote": "extension/rpc",
-        "lib":          "../extension/lib"
+        "crx2app": "../extension",
+        "browser/remote": "extension/rpc"
       }
     }); 
 

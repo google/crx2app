@@ -3,7 +3,7 @@
 
 /*global define console */
 
-define(  ['lib/MetaObject', 'lib/q/q', '../rpc/JSONMarshall', '../rpc/remote', '../rpc/chrome'], 
+define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/remote', 'crx2app/rpc/chrome'], 
   function(MetaObject, Q, JSONMarshall, remote) {
   
   var ScriptDebuggerProxy = MetaObject.extend(JSONMarshall, {

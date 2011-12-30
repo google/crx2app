@@ -3,7 +3,7 @@
 
 /*globals define console*/
 
-define(['lib/q/q'], function (Q) {
+define(['crx2app/lib/q/q'], function (Q) {
   
   // A left paren ( followed by any not-right paren ) followed by right paren
   var reParamList = /\(([^\)]*)\)/; 
