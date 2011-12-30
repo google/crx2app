@@ -40,11 +40,12 @@ function getChromeExtensionPipe(iframeDomain){
         
         // the proxying function will callback on the reply from the chromeIframe
         this.listener = function(data) {
+          // do the callback dance one time only, clear in case the callback does not set listener.
+          delete this.listener;
+
            // signal the app that we are ready
           callback();
           
-          // do the callback dance one time only
-          delete this.listener;
         }.bind(this);
 
         // rebind the listener to proxying function
@@ -63,6 +64,7 @@ function getChromeExtensionPipe(iframeDomain){
 
     addListener: function(listener) {
       this.listener = listener; // may be null
+      console.log("proxyChromePipe addListener "+listener);
     },
     
     fromExtnToApp: function(event) {
