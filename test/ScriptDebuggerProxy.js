@@ -23,6 +23,10 @@ define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall
         this.attached = true;
       }.bind(this));
     },
+    
+    detach: function(chromeProxy) {
+      JSONMarshall.detach.apply(this, [chromeProxy.getConnection()]);
+    },
   
     /*
      * create debugger for url in a new Chrome window 

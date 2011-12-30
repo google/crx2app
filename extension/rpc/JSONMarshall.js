@@ -242,7 +242,7 @@ define(['crx2app/lib/q/q'], function (Q) {
       // each RHS is a function returning a promise
       impl[method] = makeSendRemoteCommand(channel, iface.name, method, preArgs);
     });
-    this.bindRecv(channel);
+    this.attach(channel);
   };
   
   // chrome.debugger remote methods have domain.method names
@@ -257,14 +257,22 @@ define(['crx2app/lib/q/q'], function (Q) {
         impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method, preArgs);
       });
     });
-    this.bindRecv(channel);
+    this.attach(channel);
   };
-  JSONMarshall.bindRecv = function(channel) {
+  
+  
+  // This is called during buildPromisingCalls
+  
+  JSONMarshall.attach = function(channel) {
     // bind promise resolution to the recv 
     if (!this.boundRecv) {
       this.boundRecv = this.recvResponse.bind(this);
     }
     channel.addListener(this.boundRecv);
+  };
+  
+  JSONMarshall.detach = function(channel) {
+    channel.removeListener(this.boundRecv);
   };
 
   return JSONMarshall;
