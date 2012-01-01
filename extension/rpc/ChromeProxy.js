@@ -2,8 +2,8 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chrome',  'ChromeDebuggerProxy'],
-function(              MetaObject,                 Q,               JSONMarshall,               chrome,    ChromeDebuggerProxy) {
+define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chrome',  'crx2app/rpc/ChromeDebuggerProxy'],
+function(              MetaObject,                 Q,               JSONMarshall,               chrome,                ChromeDebuggerProxy) {
 
   var ChromeProxy = MetaObject.extend(JSONMarshall, {
   

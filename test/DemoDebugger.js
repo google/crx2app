@@ -2,8 +2,8 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console window */
-define(  ['ChromeDebuggerProxy'], 
-  function(ChromeDebuggerProxy) {
+define(  ['crx2app/rpc/ChromeDebuggerProxy'], 
+  function(            ChromeDebuggerProxy) {
   
   function output() {
     window.parent.postMessage(arguments,"*");
