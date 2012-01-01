@@ -2,8 +2,8 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console */
-define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chrome',  'ScriptDebuggerProxy'],
-function(              MetaObject,                 Q,               JSONMarshall,               chrome,    ScriptDebuggerProxy) {
+define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chrome',  'ChromeDebuggerProxy'],
+function(              MetaObject,                 Q,               JSONMarshall,               chrome,    ChromeDebuggerProxy) {
 
   var ChromeProxy = MetaObject.extend(JSONMarshall, {
   
@@ -32,7 +32,7 @@ function(              MetaObject,                 Q,               JSONMarshall
      * create debugger for url in a new Chrome window 
      * @param url, string URL
      * @param chromeProxy, object representing "chrome" extension API
-     * @return promise for ScriptDebuggerProxy  
+     * @return promise for ChromeDebuggerProxy  
      */
     openDebuggerProxy: function(url, debuggerEventHandlers) {
       var deferred = Q.defer();
@@ -41,7 +41,7 @@ function(              MetaObject,                 Q,               JSONMarshall
         console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
         var tabId = win.tabs[0].id;
       
-        var debuggerProxy = ScriptDebuggerProxy.new(this.connection, debuggerEventHandlers);
+        var debuggerProxy = ChromeDebuggerProxy.new(this.connection, debuggerEventHandlers);
         var connected = debuggerProxy.promiseAttach(tabId, this);
       
         Q.when(connected, function(connected) {

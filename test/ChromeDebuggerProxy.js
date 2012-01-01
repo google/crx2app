@@ -6,7 +6,7 @@
 define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/remote', 'crx2app/rpc/chrome'], 
   function(MetaObject, Q, JSONMarshall, remote, chrome) {
   
-  var ScriptDebuggerProxy = MetaObject.extend(JSONMarshall, {
+  var ChromeDebuggerProxy = MetaObject.extend(JSONMarshall, {
   
     initialize: function(connection, eventHandlers) {
       this.buildEventHandlers(this.flattenDomains(remote.events), this.flattenDomains(eventHandlers));
@@ -32,5 +32,5 @@ define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall
   });
   //---------------------------------------------------------------------------------------------
   
-  return ScriptDebuggerProxy;
+  return ChromeDebuggerProxy;
 });

@@ -2,14 +2,14 @@
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
 /*global define console window */
-define(  ['ScriptDebuggerProxy'], 
-  function(ScriptDebuggerProxy) {
+define(  ['ChromeDebuggerProxy'], 
+  function(ChromeDebuggerProxy) {
   
   function output() {
     window.parent.postMessage(arguments,"*");
   }
   
-  var DemoDebugger = ScriptDebuggerProxy.extend({
+  var DemoDebugger = ChromeDebuggerProxy.extend({
   
     // Implement Remote.events
     eventHandlers: {
@@ -44,7 +44,7 @@ define(  ['ScriptDebuggerProxy'],
     },
 
     initialize: function(connection) {
-      ScriptDebuggerProxy.initialize.apply(this, [this.eventHandlers, connection]);
+      ChromeDebuggerProxy.initialize.apply(this, [this.eventHandlers, connection]);
     }
   
   });
