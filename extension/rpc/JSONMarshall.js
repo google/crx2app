@@ -100,6 +100,9 @@ define(['crx2app/lib/q/q'], function (Q) {
   }
   
   //---------------------------------------------------------------------------------------------
+  // Beware: this object will be extended with methods from the chrome.* API. So any of the 
+  // functions can be shadowed. TODO: fix this fragile issue
+  
   var JSONMarshall = {};
 
 
@@ -242,7 +245,7 @@ define(['crx2app/lib/q/q'], function (Q) {
       // each RHS is a function returning a promise
       impl[method] = makeSendRemoteCommand(channel, iface.name, method, preArgs);
     });
-    this.attach(channel);
+    this._attach(channel);
   };
   
   // chrome.debugger remote methods have domain.method names
@@ -257,13 +260,13 @@ define(['crx2app/lib/q/q'], function (Q) {
         impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method, preArgs);
       });
     });
-    this.attach(channel);
+    this._attach(channel);
   };
   
   
   // This is called during buildPromisingCalls
   
-  JSONMarshall.attach = function(channel) {
+  JSONMarshall._attach = function(channel) {
     // bind promise resolution to the recv 
     if (!this.boundRecv) {
       this.boundRecv = this.recvResponse.bind(this);
@@ -271,7 +274,7 @@ define(['crx2app/lib/q/q'], function (Q) {
     channel.addListener(this.boundRecv);
   };
   
-  JSONMarshall.detach = function(channel) {
+  JSONMarshall._detach = function(channel) {
     channel.removeListener(this.boundRecv);
   };
 

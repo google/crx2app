@@ -4,65 +4,32 @@
 /*global define console */
 
 define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/remote', 'crx2app/rpc/chrome'], 
-  function(MetaObject, Q, JSONMarshall, remote) {
+  function(MetaObject, Q, JSONMarshall, remote, chrome) {
   
   var ScriptDebuggerProxy = MetaObject.extend(JSONMarshall, {
   
-    initialize: function(eventHandlers) {
-      this.remote = eventHandlers;
-      this.buildEventHandlers(this.flattenDomains(remote.events), this.flattenDomains(this.remote));
+    initialize: function(connection, eventHandlers) {
+      this.buildEventHandlers(this.flattenDomains(remote.events), this.flattenDomains(eventHandlers));
+      // The chrome.debugger API has a few functions we need to send remote debug commands 
+      // http://code.google.com/chrome/extensions/dev/experimental.debugger.html
+      this.buildPromisingCalls(chrome.debugger, this, connection);
     },
+
+    // See ChromeProxy for methods that return this object.
 
     promiseAttach: function(tabId, chromeProxy) {
       this._debuggee = {tabId: tabId};  // see http://code.google.com/chrome/extensions/debugger.html
-      this._chromeProxy = chromeProxy;
+
        // We prefix the argument list with our 'debuggee' object containing the tabId
-      this.build2LevelPromisingCalls(remote, this.remote, this._chromeProxy.getConnection(), [this._debuggee]);
-      var promiseAttached = this._chromeProxy.debugger.attach(this._debuggee, remote.version);
-      return Q.when(promiseAttached, function(promiseAttached) {
-        this.attached = true;
-      }.bind(this));
+      this.build2LevelPromisingCalls(remote, this, chromeProxy.getConnection(), [this._debuggee]);
+      return this.attach(this._debuggee, remote.version);
     },
     
     detach: function(chromeProxy) {
       JSONMarshall.detach.apply(this, [chromeProxy.getConnection()]);
-    },
-  
-    /*
-     * create debugger for url in a new Chrome window 
-     * @param url, string URL
-     * @param chromeProxy, object representing "chrome" extension API
-     * @return promise for ScriptDebuggerProxy  
-     */
-    openInDebug: function(url, chromeProxy) {
-      var deferred = Q.defer();
-      var jsDebugger = this;
-      chromeProxy.windows.create({},  function onCreated(win) {
-      
-        console.log("ScriptDebuggerProxy openInDebug onCreated callback, trying connect", win);
-        var tabId = win.tabs[0].id;
-      
-        var connected = jsDebugger.promiseAttach(tabId, chromeProxy);
-      
-        Q.when(connected, function(connected) {
-          console.log("ScriptDebuggerProxy openInDebug connected, send enable", connected);
-
-          var enabled = jsDebugger.remote.Debugger.enable();
-    
-          Q.when(enabled, function(enabled) {          
-            console.log("ScriptDebuggerProxy openInDebug enabled", enabled);
-
-            chromeProxy.tabs.update(tabId, {url: url}, function(tab) {
-              return deferred.resolve(jsDebugger);
-            });
-          }).end();
-        }).end();
-      
-      });
-      return deferred.promise;
     }
-  });
   
+  });
   //---------------------------------------------------------------------------------------------
   
   return ScriptDebuggerProxy;

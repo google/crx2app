@@ -43,8 +43,8 @@ define(  ['ScriptDebuggerProxy'],
       }
     },
 
-    initialize: function() {
-      ScriptDebuggerProxy.initialize.apply(this, [this.eventHandlers]);
+    initialize: function(connection) {
+      ScriptDebuggerProxy.initialize.apply(this, [this.eventHandlers, connection]);
     }
   
   });

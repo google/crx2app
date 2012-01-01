@@ -76,9 +76,8 @@ function onMessage(event) {
 
    require(['DemoDebugger', 'ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
      var chromeProxy = ChromeProxy.new(connection, {});
-     var jsDebugger = DemoDebugger.new();
-     var page = jsDebugger.openInDebug("http://www.google.com", chromeProxy);
-     Q.when(page, testConnection, failConnection).end();
+     var jsDebugger = chromeProxy.openDebuggerProxy("http://www.google.com", DemoDebugger.eventHandlers);
+     Q.when(jsDebugger, testConnection, failConnection).end();
    });
   }
 }
