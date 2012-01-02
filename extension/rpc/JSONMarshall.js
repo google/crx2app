@@ -89,10 +89,10 @@ define(['crx2app/lib/q/q'], function (Q) {
   }
   
   function marshallForHandler(impl, handler) {
-    return function (objFromJSON, p_id) {
+    return function (paramsFromJSON, p_id) {
       var args = [];
       for (var i = 0; i < handler.parameters.length; i++) {
-        args[i] = objFromJSON[handler.parameters[i]];
+        args[i] = paramsFromJSON[i];
       }
       args.push(p_id);  // purple specific clock tick postpended
       handler.apply(impl, args);
@@ -105,33 +105,6 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   var JSONMarshall = {};
 
-
-  JSONMarshall.recvEvent = function(p_id, data) {
-    // {source: "debugger", name: "response", result: result, request: request}
-    if (data && data.source && data.name) {
-      if (data.name !== 'response') {
-        this.recvEventData(p_id, data);
-      }
-    }
-  };
-
-  JSONMarshall.recvEventData = function(p_id, data) {
-    return this.categorize(p_id, data, this.applyToparsedJSON);
-  };
-
-  JSONMarshall.categorize = function(p_id, data, thenFnOfIdDataMethod) {
-    var splits = data.name.split('.');
-    var category = splits[0];
-    var methodName = splits[1];
-    var handlers = this.jsonHandlers[category];
-    if (handlers) {
-      var method = handlers[methodName];
-      if (method) {
-        return thenFnOfIdDataMethod(p_id, data, method);
-      }
-    }
-  };
-  
   JSONMarshall.applyToparsedJSON = function(p_id, data, method) {
     try {
       var objFromJSON = data.params;
@@ -145,7 +118,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   };
   
   JSONMarshall.recvResponse = function(data) {
-    console.log("JSONMarshal.recvResponse ", data);
+    console.log("JSONMarshal.recvResponse "+data.source, data);
     if (data && data.serial) {
       this.recvResponseData(data);
     } else { // not a response
@@ -154,11 +127,17 @@ define(['crx2app/lib/q/q'], function (Q) {
         console.error("JSONMarshal.recvResponse ERROR "+data.source+':'+data.params[0]);
       } else {
         if (method) {
-          var handler = this.jsonHandlers.hasOwnProperty(method) && this.jsonHandlers[method];
-          if (handler) {
-            handler.apply(this, [data.params, data.p_id]);
+          var objectKey = data.source;
+          if ( this.jsonHandlers.hasOwnProperty(objectKey) ) {
+            var object = this.jsonHandlers[objectKey];
+            var handler = object.hasOwnProperty(method) && object[method];
+            if (handler) {
+              handler.apply(this, [data.params, data.p_id]);
+            } else {
+              console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
+            }
           } else {
-            console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
+            console.warn("JSONMarshal.recvResponse dropped data, no object "+objectKey, data);
           }
         } else {
           console.error("JSONMarshal.recvResponse dropped data, no .serial and  .method ", data);
@@ -222,20 +201,21 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   // return: dictionary of functions accepting json objects, calling impl handlers
   // iface: empty functions for each possible method name coming over JSON
+  // objectKey: name, eg chrome.debugger, chrome.windows,...
   // impl: defn for some of the iface entries becomes |this| for handlers
   // eventHandlers: {Debugger: {functions}, Console: {functions}}
-  JSONMarshall.buildEventHandlers = function(iface, impl) {
-    this.jsonHandlers = {}; 
+  JSONMarshall.buildEventHandlers = function(iface, objectKey, impl) {
+    this.jsonHandlers = this.jsonHandlers || {};
+    var object = this.jsonHandlers[objectKey] = {};
     var handlerNames = Object.keys(iface);
     handlerNames.forEach(function buildHandler(handlerName) {
       var handlerSpec = iface[handlerName]; // an empty function
       var handler = impl[handlerName];  // implementation function of
       if (handler) {
         this.addHandlerParameters(handler, handlerSpec);
-        this.jsonHandlers[handlerName] = marshallForHandler(impl, handler);
+        object[handlerName] = marshallForHandler(impl, handler);
       }
     }.bind(this));
-    return this.jsonHandlers;
   };
    
   // Walk the API and implement each function to send over channel.

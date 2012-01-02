@@ -10,13 +10,13 @@ function(              MetaObject,                 Q,               JSONMarshall
     initialize: function(connection, eventHandlers) {
       this.connection = connection;
     
-      this.windows = eventHandlers;
-      this.buildEventHandlers(chrome.windows.events, this.windows);
+      this.windows = eventHandlers.windows;
+      this.buildEventHandlers(chrome.windows.events, 'chrome.windows', this.windows);
       this.buildPromisingCalls(chrome.windows, this.windows, connection);
 
-      this.tabs = {};
+      this.tabs = eventHandlers.tabs;
+      this.buildEventHandlers(chrome.tabs.events, 'chrome.tabs', this.tabs);
       this.buildPromisingCalls(chrome.tabs, this.tabs, connection);
-    
     },
   
     getConnection: function(connection) {
