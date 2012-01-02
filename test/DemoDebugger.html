@@ -23,10 +23,36 @@ function loadPlugin(url) {
   elt.appendChild(iframe);
 }
 
+var tests = {
+  newTabCreated: Q.defer()
+};
 
-function testConnection(DemoDebugger) {
+var tester = {
+  eventHandlers: {
+    tabs: {
+      onCreated: function(tab) {
+        if (tab.url === 'chrome://newtab/') {
+          tests.newTabCreated.resolve(true);
+        }
+      },
+      onUpdated: function(tab) {
+      }
+    },
+    windows: {
+      onCreated: function(window) {
+      }
+    }
+  }
+};
+
+function testConnection(debuggerProxy, chromeProxy) {
     console.log("testing DemoDebugger");
     // TODO some testing
+    var promise = tests.newTabCreated.promise;
+    Q.when(promise, function(promise) {
+    
+      debuggerProxy._detach(chromeProxy);
+    }).end();
 }
 function failConnection(err) {
     console.err("Error "+err, err);
@@ -52,14 +78,17 @@ function onMessage(event) {
    require(['DemoDebugger', 'crx2app/rpc/ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
    
      // wrap the connection in rpc stuff for chrome.* api
-     var chromeProxy = ChromeProxy.new(connection, {});
+     var chromeProxy = ChromeProxy.new(connection, tester.eventHandlers);
      
      // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
      // and attach to a new tab, enable debugging and update the page to the given URL.
-     var debuggerProxy = chromeProxy.openDebuggerProxy("http://www.google.com", DemoDebugger.eventHandlers);
+     var testURL = window.location.toString();
+     var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger.eventHandlers);
      
      // when we are attached to the given page, test it.
-     Q.when(debuggerProxy, testConnection, failConnection).end();
+     Q.when(debuggerProxy, function(debuggerProxy) {
+       testConnection(debuggerProxy, chromeProxy);
+     }, failConnection).end();
    });
   }
 }
