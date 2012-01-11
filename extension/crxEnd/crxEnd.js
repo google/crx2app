@@ -126,6 +126,8 @@ var crxEnd = {
     if (target) {
       if ( target.api.indexOf(jsonObj.method) > -1 ) {
         var method = target.chromeWrappers[jsonObj.method];
+        jsonObj.params = jsonObj.params || [];         // devtools sends undefined params
+        jsonObj.serial = jsonObj.serial || jsonObj.id; // devtools uses 'id'
         if (jsonObj.params instanceof Array) {
           if (typeof jsonObj.serial === 'number') {
             // send on to chrome
@@ -134,7 +136,7 @@ var crxEnd = {
             windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method, jsonObj);
           }
         } else {
-          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array"+jsonObj.target+"."+jsonObj.method, jsonObj);
+          windowsAdapter.postError("params \'"+jsonObj.params+"\' is not an array "+jsonObj.target+"."+jsonObj.method, jsonObj);
         }
       } else {
         windowsAdapter.postError("method \'"+jsonObj.method+"\' is not one of "+jsonObj.target+'.'+target.api.join(','), jsonObj);
