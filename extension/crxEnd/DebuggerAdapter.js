@@ -5,7 +5,7 @@
 
 
 /*
-  Connection handler for one tab to chrome.experimental.debugger
+  Connection handler for one tab to chrome.debugger
   @param tabId the id of the tab to debug
   @param send function(JSONable object) to forward to app
 */
@@ -45,7 +45,7 @@ DebuggerAdapter.prototype = {
       this.addListeners();
       
       // Setup the connection to the devtools backend
-      chrome.experimental.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
+      chrome.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
     },
     
     sendCommand: function(method, serial, debuggee, params) {
@@ -53,7 +53,7 @@ DebuggerAdapter.prototype = {
         return;
       }
       
-      chrome.experimental.debugger.sendCommand(
+      chrome.debugger.sendCommand(
         { tabId: debuggee.tabId },
         method,
         params,
@@ -65,7 +65,7 @@ DebuggerAdapter.prototype = {
       if (!this._checkDebuggee(debuggee)) {
         return; 
       }
-      chrome.experimental.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
+      chrome.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
       
       this.onRemoved(debuggee.tabId, {});
     }
@@ -124,13 +124,13 @@ DebuggerAdapter.prototype = {
   
   addListeners: function() {
       // prepare for events from chrome.debugger
-      chrome.experimental.debugger.onEvent.addListener(this.onEvent);
+      chrome.debugger.onEvent.addListener(this.onEvent);
       // detach if the tab is removed
       chrome.tabs.onRemoved.addListener(this.onRemoved);
   },
   
   removeListeners: function() {
-      chrome.experimental.debugger.onEvent.removeListener(this.onEvent);
+      chrome.debugger.onEvent.removeListener(this.onEvent);
       chrome.tabs.onRemoved.removeListener(this.onRemoved);
   },
   

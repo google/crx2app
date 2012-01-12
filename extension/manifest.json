@@ -13,7 +13,8 @@
       "*://*/*",
       "tabs",
       "contextMenus",
-      "webNavigation"
+      "webNavigation",
+      "debugger"
     ],
   "options_page": "crxEnd/options.html",
   "page_action": {

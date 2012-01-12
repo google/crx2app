@@ -13,19 +13,6 @@ function onClickDebug(event) {
   saveOptions();
 }
 
-function setDropInfobar(dropInfobar) {
-  var dropInfobarElt = document.getElementById('dropInfobar');
-  if (dropInfobar) {
-    dropInfobarElt.checked = true;
-  } else {
-    delete dropInfobarElt.checked;
-  }
-}
-
-function onClickDropInfobar(event) {
-  saveOptions();
-}
-
 function setDebug(options, setting) {
   if (options[setting]) {
     document.getElementById(setting).checked = true;
@@ -38,9 +25,6 @@ function restore() {
     var origins = options.origins;
     if (origins && origins instanceof Array) {
       origins.forEach(addRow);
-    }
-    if (options.dropInfobar) {
-      setDropInfobar(true);
     }
     setDebug(options, 'debugConnection');
     setDebug(options, 'debugMessages');
@@ -299,10 +283,6 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
   </tr>
 </tbody>
 </table>
-</div>
-<div>
-  <div>A warning symbol will appear in the URL bar of each page controlled by any other site.</div>
-  <input type='checkbox' id="dropInfobar" onclick='onClickDropInfobar(event)' />Do not show additional warning infobar<br />
 </div>
 <div id="debugOptions">
 <br />

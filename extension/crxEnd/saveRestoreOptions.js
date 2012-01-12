@@ -18,9 +18,6 @@ function saveOptions() {
     }
   }
   
-  var dropInfobarElt = document.getElementById('dropInfobar');
-  options.dropInfobar = dropInfobarElt.checked;
-  
   var debugConnection = document.getElementById('debugConnection');
   options.debugConnection = debugConnection.checked;
 

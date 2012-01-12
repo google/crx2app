@@ -11,7 +11,7 @@
   app to chrome and responses/events from chrome to app.
   
   The messages from App are multiplexed: {target: string, request: any},
-  send to chrome[target], eg chrome.experimental.debugger
+  send to chrome[target], eg chrome.debugger
   
   The messages to App are multiplexed: {source: string, data: any}
   

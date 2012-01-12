@@ -15,8 +15,6 @@ function TabsAdapter(windowsAdapter) {
   }.bind(this));
   
   this._bindListeners();
-  var options = restoreOptions();
-  this.useInfobar = !options.dropInfobar;
   this.api = ['create', 'update', 'remove'];
   this._connect();
 }
@@ -69,18 +67,7 @@ TabsAdapter.prototype = {
     });
   },
   
-  putUpInfobar: function(tabId) {
-    var details = {tabId: tabId, path: "crxEnd/warnDebugging.html?debuggerDomain="+this.windowsAdapter.debuggerOrigin, height: 24};
-    if (debugWarnings) console.log("putUpInfoBar ready", details);
-    chrome.experimental.infobars.show(details, function(win){
-      if (debugWarnings) console.log("putUpInfobar done", win);
-    });
-  },
-  
   warnAttached: function(tabId) {
-    if (this.useInfobar) {
-      this.putUpInfobar(tabId);
-    }
     chrome.pageAction.setTitle({tabId: tabId, title: "This tab controlled by "+this.windowsAdapter.debuggerOrigin});
     chrome.pageAction.show(tabId);
     if (debugWarnings) console.log("TabsAdapter warnAttach on tabId: "+tabId);
