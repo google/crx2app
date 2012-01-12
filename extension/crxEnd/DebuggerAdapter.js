@@ -24,7 +24,7 @@ function DebuggerAdapter(windowsAdapter) {
   }.bind(this));
   
   this._bindListeners();
-  this._buildAPI(remote);
+  this.api = ['attach', 'sendCommand', 'detach'];
   this.addListeners();
 }
 
@@ -57,7 +57,7 @@ DebuggerAdapter.prototype = {
         { tabId: debuggee.tabId },
         method,
         params,
-        this.onResponse.bind(this, serial, {method: method, params:params})
+        this.onResponse.bind(this, serial, {method: method, params:params})  // PostSource.onResponse
       );
     },
   
@@ -140,21 +140,8 @@ DebuggerAdapter.prototype = {
     // onResponse bound for each call
     this.onDetach = this.onDetach.bind(this);
     this.onRemoved = this.onRemoved.bind(this);
-  },
-  
-  _buildAPI: function(remote) {
-    this.api = Object.keys(this.chromeWrappers);
-    var domains = Object.keys(remote.api);
-    domains.forEach(function(domain) {
-      var methods = Object.keys(remote.api[domain]);
-      methods.forEach(function(method) {
-        var command = domain+'.'+method;
-        this.api.push(command);
-        this.chromeWrappers[command] = this.chromeWrappers.sendCommand.bind(this, command);
-      }.bind(this));
-    }.bind(this));
-    return this.api;
   }
+  
 };
 
   return DebuggerAdapter;
