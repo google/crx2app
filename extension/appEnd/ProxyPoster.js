@@ -15,6 +15,7 @@ function ProxyPoster(attachment) {
   this.otherWindow = window.parent;  // we are in an iframe
   this.targetOrigin = '*';           // we send to any enclosing domain
   this._bindListeners();
+  // this.debug = true;
 }
 
 ProxyPoster.prototype = {
@@ -44,13 +45,17 @@ ProxyPoster.prototype = {
   
   // up to otherWindow
   fromAppToOther: function(msgObj) {
-    console.log("ProxyPoster fromAppToOther", msgObj);
+    if (this.debug) {
+      console.log("ProxyPoster fromAppToOther", msgObj);
+    }
     this.otherWindow.postMessage(msgObj, this.targetOrigin);
   },
   
   // first incoming 'message' event from other window
   onIntroduction: function(event) {
-    console.log("ProxyPoster onIntroduction", event);
+    if (this.debug) {
+      console.log("ProxyPoster onIntroduction", event);
+    }
     if ( event.data.indexOf && (event.data.indexOf(this.handShake) === 0) ) {
       this.targetOrigin = event.origin;  // now we can target, rather than broadcast
       window.removeEventListener('message', this.onIntroduction, false);
@@ -65,7 +70,9 @@ ProxyPoster.prototype = {
 
   // incoming 'message' event
   fromOtherWindow: function(event) {
-    console.log("ProxyPoster recv", event.data);
+    if (this.debug) {
+      console.log("ProxyPoster recv", event.data);
+    }
     this.attachment.postMessage(event.data);
   },
   

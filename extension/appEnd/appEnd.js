@@ -8,6 +8,8 @@
 
 function getChromeExtensionPipe(){
 
+  var debug = false;
+
   var appEnd = {
 
     // Announce to the extn that we are running and
@@ -67,7 +69,9 @@ function getChromeExtensionPipe(){
     
     fromExtnToApp: function(msgObj) {
       if (this.listener) {
-        console.log("appEnd fromExtnToApp", msgObj);
+        if (debug) {
+          console.log("appEnd fromExtnToApp", msgObj);
+        }
         this.listener(msgObj);
       } else { // else no listener
         console.info("crx2app.appEnd no listener for recv", msgObj);
@@ -75,7 +79,9 @@ function getChromeExtensionPipe(){
     },
 
     fromAppToExtn: function(msgObj) {
-      console.log("appEnd postMessage", msgObj);
+      if (debug) {
+        console.log("appEnd postMessage", msgObj);
+      }
       this.port.postMessage(msgObj);
     },
     

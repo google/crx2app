@@ -104,6 +104,10 @@ DebuggerAdapter.prototype = {
   //---------------------------------------------------------------------------
   // class methods
   _checkDebuggee: function(debuggee) {
+    if (!debuggee) {
+      this.postError("crx2app.DebuggerAdapter no debuggee");
+      return false;
+    }
     if (!this.windowsAdapter.isAccessibleTab(debuggee.tabId)) {
        this.postError("Debuggee tabId "+debuggee.tabId+" is not accessible");
        return false;
