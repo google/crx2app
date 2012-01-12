@@ -28,6 +28,19 @@ function(              MetaObject,                 Q,               JSONMarshall
       JSONMarshall.detach.apply(this, [this.getConnection()]);
     },
   
+  
+    promiseNewWindow: function() {
+      var deferred = Q.defer();      
+      //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
+      var extensionDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+      var fakeBlankURL = extensionDomain+"/workaroundBug108519.html";
+      //**********
+      this.windows.create({url: fakeBlankURL},  function onCreated(win) {
+        deferred.resolve(win);
+      });
+      return deferred.promise;
+    },
+    
     /*
      * create debugger for url in a new Chrome window 
      * @param url, string URL
@@ -36,11 +49,8 @@ function(              MetaObject,                 Q,               JSONMarshall
      */
     openDebuggerProxy: function(url, debuggerEventHandlers) {
       var deferred = Q.defer();
-      //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
-      var extensionDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
-      var fakeBlankURL = extensionDomain+"/workaroundBug108519.html";
-      //**********
-      this.windows.create({url: fakeBlankURL},  function onCreated(win) {
+      var win = this.promiseNewWindow();
+      Q.when(win, function(win) {
       
         console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
         var tabId = win.tabs[0].id;
