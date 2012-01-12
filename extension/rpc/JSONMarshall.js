@@ -44,7 +44,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   // promises made and not kept by serial
   var deferredBySerial = {};
 
-  function makeSendRemoteCommand(channel, target, method, preArgs) {
+  function makeSendRemoteCommand(channel, target, method, debuggee) {
     // we close over the argumentes
     return function sendRemoteCommand() {  // arguments here will depend upon method
       var args = Array.prototype.slice.apply(arguments, [0]);
@@ -75,12 +75,7 @@ define(['crx2app/lib/q/q'], function (Q) {
         promise.end();
       }
       
-      // Similar to bind(), we set some args at build time
-      if (preArgs && (preArgs instanceof Array) ) {
-        args = preArgs.concat(args);
-      }
-      
-      var message = {target: target, method: method,  params: args, serial: serial};
+      var message = {target: target, method: method,  params: args, serial: serial, debuggee: debuggee};
       
       channel.postMessage(message);
       // callers can wait on the promise to be resolved by recvResponseData
@@ -219,17 +214,17 @@ define(['crx2app/lib/q/q'], function (Q) {
   };
    
   // Walk the API and implement each function to send over channel.
-  JSONMarshall.buildPromisingCalls = function(iface, impl, channel, preArgs) {
+  JSONMarshall.buildPromisingCalls = function(iface, impl, channel, debuggee) {
     var methods = Object.keys(iface.api);
     methods.forEach(function buildMethod(method) {
       // each RHS is a function returning a promise
-      impl[method] = makeSendRemoteCommand(channel, iface.name, method, preArgs);
+      impl[method] = makeSendRemoteCommand(channel, iface.name, method, debuggee);
     });
     this._attach(channel);
   };
   
   // chrome.debugger remote methods have domain.method names
-  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, channel, preArgs) {
+  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, channel, debuggee) {
     var api = iface.api;
     var domains = Object.keys(api);
     domains.forEach(function buildSend(domain) {
@@ -237,7 +232,7 @@ define(['crx2app/lib/q/q'], function (Q) {
       var methods = Object.keys(api[domain]);
       methods.forEach(function buildMethod(method) {
         // each RHS is a function returning a promise
-        impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method, preArgs);
+        impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method, debuggee);
       });
     });
     this._attach(channel);

@@ -41,7 +41,7 @@ function(              MetaObject,                 Q,               JSONMarshall
         console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
         var tabId = win.tabs[0].id;
       
-        var debuggerProxy = ChromeDebuggerProxy.new(this.connection, debuggerEventHandlers);
+        var debuggerProxy = ChromeDebuggerProxy.new(this.connection, {tabId: tabId}, debuggerEventHandlers);
         var connected = debuggerProxy.promiseAttach(tabId, this);
       
         Q.when(connected, function(connected) {

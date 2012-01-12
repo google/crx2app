@@ -37,12 +37,12 @@ WindowsAdapter.prototype = {
   
   // API functions, restricted versions of the chrome.windows functions
   chromeWrappers: {
-    create: function(serial, createData) {
+    create: function(serial, ignore, createData) {
       var cleanCreateData = this._cleanseCreateData(createData);
       chrome.windows.create(cleanCreateData, this.onCreated.bind(this, serial));
     },
   
-    getAll: function(serial, getInfo) {
+    getAll: function(serial, ignore, getInfo) {
       chrome.windows.getAll(getInfo, this.onGetAll.bind(this, serial));
     }
   },

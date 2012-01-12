@@ -26,13 +26,13 @@ TabsAdapter.path = 'chrome.tabs';
 
 TabsAdapter.prototype = {
   chromeWrappers: {
-    create: function(serial, createProperties) {
+    create: function(serial, ignore, createProperties) {
       var cleanCreateProperties = this._cleanseCreateProperties(createProperties);
       chrome.tabs.create(cleanCreateProperties, this.noErrorPosted);
     },
   
     // NB The debugger will see progress events from the devtools and chrome.extension
-    update: function(serial, tabId, updateProperties) {
+    update: function(serial, ignore, tabId, updateProperties) {
       var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
       if (index > -1) {
         var bound = this.onUpdateResponse.bind(this, serial);
@@ -43,7 +43,7 @@ TabsAdapter.prototype = {
       }
     },
   
-    remove: function(serial, indices) {
+    remove: function(serial, ignore, indices) {
       if (typeof indices === 'number') {
         indices = [indices];
       }
