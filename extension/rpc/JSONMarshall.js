@@ -44,9 +44,9 @@ define(['crx2app/lib/q/q'], function (Q) {
   // promises made and not kept by serial
   var deferredBySerial = {};
 
-  function makeSendRemoteCommand(channel, target, method, debuggee) {
+  function makeSendCommand(channel, target, method, debuggee) {
     // we close over the argumentes
-    return function sendRemoteCommand() {  // arguments here will depend upon method
+    return function sendCommand() {  // arguments here will depend upon method
       var args = Array.prototype.slice.apply(arguments, [0]);
       
       // Our sequence number for RPC
@@ -62,14 +62,14 @@ define(['crx2app/lib/q/q'], function (Q) {
         var callback = args.pop();
         // once we get an answer, send it to the callback
         promise = Q.when(promise, function(promise){
-          console.log("callback now "+promise);
+          console.log(method+" callback now "+promise);
           callback(promise);
         }, function() {
           var errMsg = arguments[0];
           if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.args && errMsg.args.length ) {
             console.error("Error "+errMsg.args[0], errMsg.args[1]);
           } else {
-            console.error("JSONMarshall sendRemoteCommand ERROR ", arguments);
+            console.error("JSONMarshall sendCommand ERROR ", arguments);
           }
         });
         promise.end();
@@ -94,6 +94,11 @@ define(['crx2app/lib/q/q'], function (Q) {
     };
   }
   
+  function makeRemoteDebugSendCommand(chromeProxy, name, domainMethod, debuggee){
+    return function() {
+      return chromeProxy.debugger.sendCommand(debuggee, domainMethod, arguments);
+    };
+  }
   //---------------------------------------------------------------------------------------------
   // Beware: this object will be extended with methods from the chrome.* API. So any of the 
   // functions can be shadowed. TODO: fix this fragile issue
@@ -143,7 +148,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   
   JSONMarshall.recvResponseData = function(data) {
-    var serial = data.serial; // set by sendRemoteCommand
+    var serial = data.serial; // set by sendCommand
     var deferred = deferredBySerial[serial];
     if (deferred) {
       try {
@@ -218,13 +223,14 @@ define(['crx2app/lib/q/q'], function (Q) {
     var methods = Object.keys(iface.api);
     methods.forEach(function buildMethod(method) {
       // each RHS is a function returning a promise
-      impl[method] = makeSendRemoteCommand(channel, iface.name, method, debuggee);
+      impl[method] = makeSendCommand(channel, iface.name, method, debuggee);
     });
     this._attach(channel);
   };
   
+  
   // chrome.debugger remote methods have domain.method names
-  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, channel, debuggee) {
+  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, chromeProxy, debuggee) {
     var api = iface.api;
     var domains = Object.keys(api);
     domains.forEach(function buildSend(domain) {
@@ -232,10 +238,9 @@ define(['crx2app/lib/q/q'], function (Q) {
       var methods = Object.keys(api[domain]);
       methods.forEach(function buildMethod(method) {
         // each RHS is a function returning a promise
-        impl[domain][method] = makeSendRemoteCommand(channel, iface.name, domain+'.'+method, debuggee);
+        impl[domain][method] = makeRemoteDebugSendCommand(chromeProxy, iface.name, domain+'.'+method, debuggee);
       });
     });
-    this._attach(channel);
   };
   
   

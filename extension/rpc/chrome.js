@@ -65,14 +65,14 @@ define([], function () {
   chrome.debugger = {
     name: "chrome.debugger",
     api: {
-      attach: function(tabId, callback) {},
+      attach: function(tabId, requiredVersion, callback) {},
       detach: function(tabId, callback) {},
       // Rather than using this method, use rpc/remote and JSONMarshal.build2LevelPromisingCalls
-      sendRequest: function(tabId, method, params, callback) {}
+      sendCommand: function(debuggee, method, params, callback) {}
     },
     events: {
-      onDetach: function(tabId){},
-      onEvent: function(tabId, method, params){}
+      onDetach: function(debuggee){},
+      onEvent: function(debuggee, method, params){}
     }
   };
   

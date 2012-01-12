@@ -131,7 +131,7 @@ var crxEnd = {
         if (jsonObj.params instanceof Array) {
           if (typeof jsonObj.serial === 'number') {
             // send on to chrome
-            method.apply(target, [jsonObj.serial, jsonObj.debuggee].concat(jsonObj.params) );
+            method.apply(target, [jsonObj.serial].concat(jsonObj.params) );
           } else {
             windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method, jsonObj);
           }

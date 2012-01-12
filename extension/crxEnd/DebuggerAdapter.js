@@ -48,7 +48,7 @@ DebuggerAdapter.prototype = {
       chrome.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
     },
     
-    sendCommand: function(method, serial, debuggee, params) {
+    sendCommand: function(serial, debuggee, method, params) {
       if (!this._checkDebuggee(debuggee)) {
         return;
       }

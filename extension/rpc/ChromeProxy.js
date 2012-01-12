@@ -17,6 +17,9 @@ function(              MetaObject,                 Q,               JSONMarshall
       this.tabs = eventHandlers.tabs;
       this.buildEventHandlers(chrome.tabs.events, 'chrome.tabs', this.tabs);
       this.buildPromisingCalls(chrome.tabs, this.tabs, connection);
+      
+      this.debugger = {}; // TODO event handlers
+      this.buildPromisingCalls(chrome.debugger, this.debugger, connection);
     },
   
     getConnection: function(connection) {
@@ -55,11 +58,9 @@ function(              MetaObject,                 Q,               JSONMarshall
         console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
         var tabId = win.tabs[0].id;
       
-        var debuggerProxy = ChromeDebuggerProxy.new(this.connection, {tabId: tabId}, debuggerEventHandlers);
-        var connected = debuggerProxy.promiseAttach(this);
-      
-        Q.when(connected, function(connected) {
-          console.log("ChromeProxy openDebuggerProxy connected, send enable", connected);
+        var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId}, debuggerEventHandlers);
+        this.debugger.attach({tabId: tabId}, "0.1", function() {
+          console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
 
           var enabled = debuggerProxy.Debugger.enable();
     
@@ -70,7 +71,7 @@ function(              MetaObject,                 Q,               JSONMarshall
               return deferred.resolve(debuggerProxy);
             });
           }.bind(this)).end();
-        }.bind(this)).end();
+        }.bind(this));
       
       }.bind(this));
       return deferred.promise;
