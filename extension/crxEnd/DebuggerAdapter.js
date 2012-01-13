@@ -12,12 +12,15 @@
 
 function makeDebuggerAdapter(chrome, PostSource, remote) {
 
+var debug = false;
+
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
   this.windowsAdapter.setDebugAdapter(this);   // backpointer for disconnect
 
   this.debuggeeTabIds = [];
   
+  // TODO redo this mess
   var portDelegate = new PostSource(DebuggerAdapter.path);
   Object.keys(portDelegate).forEach(function(key) {
     this[key] = portDelegate[key].bind(windowsAdapter);   
@@ -52,12 +55,31 @@ DebuggerAdapter.prototype = {
       if (!this._checkDebuggee(debuggee)) {
         return;
       }
+      if (this.debuggeeTabIds.indexOf(debuggee.tabId) === -1) {
+        // chrome.debugger does not seem to give error except in console
+        this.postError("crx2app: tab "+debuggee.tabId+" not attached");
+        return;
+      }
+      
+      var commandResponse = function(result) {
+        if (chrome.extension.lastError) {
+          console.error("sendCommand FAILS "+chrome.extension.lastError);
+        }
+        if (debug) {
+          console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, result);
+        }
+        this.onResponse(serial, {method: method, params:params}, result);
+      }.bind(this);
+
+      if (debug) {
+        console.log(serial+" crxEnd/DebuggerAdapter.sendCommand "+method, params);
+      }
       
       chrome.debugger.sendCommand(
         { tabId: debuggee.tabId },
         method,
         params,
-        this.onResponse.bind(this, serial, {method: method, params:params})  // PostSource.onResponse
+        commandResponse
       );
     },
   
@@ -75,7 +97,6 @@ DebuggerAdapter.prototype = {
   
   // Forward debugger events as JSON
   onEvent: function(debuggee, method, params) {
-    // causes lots of logging      console.log("MonitorChrome: Debugger.onEvent "+method+" in tab "+debuggee.tabId+" vs this.tabId:"+this.tabId, params);
     if ( this.windowsAdapter.isAccessibleTab(debuggee.tabId) ) {
       this.postMessage({source: this.getPath(), method: method, params: params}); 
     }
