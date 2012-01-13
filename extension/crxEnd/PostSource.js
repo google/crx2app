@@ -5,6 +5,7 @@
 
 
 // Close over path, but methods will have windowAdapter for |this|
+// TODO use MetaObject in steady of this mess
  
 function PostSource(path) {
   return {
@@ -26,7 +27,7 @@ function PostSource(path) {
     },  
   
     postError: function(msg, jsonObj) {
-      var errorData = {source: this.getPath(), method: 'onError', params: [msg]};
+      var errorData = {source: path, method: 'onError', params: [msg]};
       if(jsonObj) {
          errorData.params = errorData.params.concat(jsonObj);
         if (jsonObj.serial) { // then we have an error in a response
@@ -47,7 +48,7 @@ function PostSource(path) {
     // Forward command responses from Chrome to App
     onResponse: function(serial, jsonObj, result) {
       if ( this.noErrorPosted({serial: serial}) ) {
-        this.postMessage({source: this.getPath(), serial: serial, method: "OnResponse", params: [result], request: jsonObj});
+        this.postMessage({source: path, serial: serial, method: "OnResponse", params: [result], request: jsonObj});
         return true;
       }
       return false;
