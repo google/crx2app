@@ -11,6 +11,8 @@
 
 function getChromeExtensionPipe(iframeDomain){
 
+  var debug = false;
+
   var proxyEnd = {
 
     // call this method before the chromeIframe can load
@@ -20,7 +22,9 @@ function getChromeExtensionPipe(iframeDomain){
       this.listeners = [];
       this.onIntroduction = this.onAttach.bind(this, callback);
       window.addEventListener('message', this.onIntroduction, false);
-      console.log("proxyChromePipe awaiting introduction from "+iframeDomain);
+      if (debug) {
+        console.log("proxyChromePipe awaiting introduction from "+iframeDomain);
+      }
     },
 
     detach: function() {
@@ -31,7 +35,9 @@ function getChromeExtensionPipe(iframeDomain){
     //
     onAttach: function(callback, event) {
       if (event.origin === iframeDomain) {
-        console.log("proxyChromePipe onAttach called by "+event.origin);
+        if (debug) {
+          console.log("proxyChromePipe onAttach called by "+event.origin);
+        }
         
         // Remember our partner
         this.source = event.source; 
@@ -72,7 +78,9 @@ function getChromeExtensionPipe(iframeDomain){
     addListener: function(listener) {
       if ( listener && !this.hasListener(listener) ) { 
         this.listeners.push(listener);
-        console.log("proxyChromePipe addListener "+this.listeners.length+": "+listener);
+        if (debug) {
+          console.log("proxyChromePipe addListener "+this.listeners.length+": "+listener);
+        }
       }
     },
     
@@ -87,7 +95,9 @@ function getChromeExtensionPipe(iframeDomain){
     
     fromExtnToApp: function(event) {
       if (event.origin === iframeDomain) {
-        console.log("crx2app.appEnd.fromExtnToApp in "+window.location, event);
+        if (debug) {
+          console.log("crx2app.proxyChromePipe.fromExtnToApp in "+window.location, event);
+        }
         this.listeners.forEach(function(listener) {
           listener(event.data);
         }); 
@@ -96,9 +106,11 @@ function getChromeExtensionPipe(iframeDomain){
 
     fromAppToExtn: function(msgObj) {
       if (!this.listeners.length) {
-        console.error("crx2app/appEnd/proxyChromePipe.fromAppToExtn: sending but not listening");
+        console.warning("crx2app.appEnd.proxyChromePipe.fromAppToExtn: sending but not listening");
       }
-      console.log("proxyChromePipe postMessage "+iframeDomain, msgObj);
+      if (debug) {
+        console.log("proxyChromePipe postMessage "+iframeDomain, msgObj);
+      }
       this.source.postMessage(msgObj, iframeDomain);
     },
     

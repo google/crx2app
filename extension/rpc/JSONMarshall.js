@@ -5,6 +5,8 @@
 
 define(['crx2app/lib/q/q'], function (Q) {
   
+  var debug = false;
+  
   // A left paren ( followed by any not-right paren ) followed by right paren
   var reParamList = /\(([^\)]*)\)/; 
   var reParameters = /\(([^\)]*)\)/;
@@ -62,7 +64,9 @@ define(['crx2app/lib/q/q'], function (Q) {
         var callback = args.pop();
         // once we get an answer, send it to the callback
         promise = Q.when(promise, function(promise){
-          console.log(method+" callback now "+promise);
+          if (debug) {
+            console.log(method+" callback now "+promise);
+          }
           callback(promise);
         }, function() {
           var errMsg = arguments[0];
@@ -118,7 +122,9 @@ define(['crx2app/lib/q/q'], function (Q) {
   };
   
   JSONMarshall.recvResponse = function(data) {
-    console.log("JSONMarshal.recvResponse "+data.source, data);
+    if (debug) {
+      console.log("JSONMarshal.recvResponse "+data.source, data);
+    }
     if (data && data.serial) {
       this.recvResponseData(data);
     } else { // not a response
@@ -137,7 +143,7 @@ define(['crx2app/lib/q/q'], function (Q) {
               console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
             }
           } else {
-            console.warn("JSONMarshal.recvResponse dropped data, no object "+objectKey, data);
+            console.warn("JSONMarshal.recvResponse dropped data, no handlers for object "+objectKey, data);
           }
         } else {
           console.error("JSONMarshal.recvResponse dropped data, no .serial and  .method ", data);
@@ -167,7 +173,9 @@ define(['crx2app/lib/q/q'], function (Q) {
           }
         }
       } finally {
-        console.log("recvResponseData completed "+serial, data);
+        if (debug) {
+          console.log("recvResponseData completed "+serial, data);
+        }
         delete deferredBySerial[serial];
       }
     } // else another remote may have created the request
