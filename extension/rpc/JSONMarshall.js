@@ -5,7 +5,7 @@
 
 define(['crx2app/lib/q/q'], function (Q) {
   
-  var debug = false;
+  var debug = true;
   
   // A left paren ( followed by any not-right paren ) followed by right paren
   var reParamList = /\(([^\)]*)\)/; 
@@ -56,18 +56,17 @@ define(['crx2app/lib/q/q'], function (Q) {
       
       // store the deferred for recvResponseData
       var deferred = deferredBySerial[serial] = Q.defer();
-      var promise = deferred.promise;
       
       // Check for a callback function
       if (typeof args[args.length - 1] === 'function') {
         // remove the callback, otherwise we get a DOM error on serialization
         var callback = args.pop();
         // once we get an answer, send it to the callback
-        promise = Q.when(promise, function(promise){
+        Q.when(deferred.promise, function(result){
           if (debug) {
-            console.log(method+" callback now "+promise);
+            console.log(method+" callback now "+result);
           }
-          callback(promise);
+          callback(result);
         }, function() {
           var errMsg = arguments[0];
           if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.args && errMsg.args.length ) {
@@ -75,15 +74,14 @@ define(['crx2app/lib/q/q'], function (Q) {
           } else {
             console.error("JSONMarshall sendCommand ERROR ", arguments);
           }
-        });
-        promise.end();
+        }).end();
       }
       
       var message = {target: target, method: method,  params: args, serial: serial, debuggee: debuggee};
       
       channel.postMessage(message);
       // callers can wait on the promise to be resolved by recvResponseData
-      return promise; 
+      return deferred.promise; 
     };
   }
   
@@ -140,6 +138,9 @@ define(['crx2app/lib/q/q'], function (Q) {
             if (handler) {
               handler.apply(this, [data.params, data.p_id]);
             } else {
+              if (object.jsonObjectHandler) {
+                object.jsonObjectHandler.apply(object, [data]);              
+              }
               console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
             }
           } else {
