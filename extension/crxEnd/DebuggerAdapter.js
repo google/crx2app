@@ -48,7 +48,7 @@ DebuggerAdapter.prototype = {
       this.addListeners();
       
       // Setup the connection to the devtools backend
-      chrome.debugger.attach(debuggee, version, this.onAttach.bind(this, serial));
+      chrome.debugger.attach(debuggee, version, this.onAttach.bind(this, serial, debuggee));
     },
     
     sendCommand: function(serial, debuggee, method, params) {
@@ -63,7 +63,7 @@ DebuggerAdapter.prototype = {
       
       var commandResponse = function(result) {
         if (chrome.extension.lastError) {
-          console.error("sendCommand FAILS "+chrome.extension.lastError);
+          console.error("sendCommand FAILS "+chrome.extension.lastError, chrome.extension.lastError);
         }
         if (debug) {
           console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, result);
@@ -102,15 +102,21 @@ DebuggerAdapter.prototype = {
     }
   },
   
-  onAttach: function(serial) {
+  onAttach: function(serial, debuggee) {
     if ( this.noErrorPosted({serial: serial}) ) {
-      this.postMessage({source: this.getPath(), method: "onAttach", serial: serial, params:[]});
+      if (debug) {
+        console.log(serial+":  crx2app.DebuggerAdapter.onAttach: "+debuggee.tabId);
+      }
+      this.postMessage({source: this.getPath(), method: "onAttach", serial: serial, params:[debuggee]});
     }
   },
   
   // The browser backend announced detach
   onDetach: function(debuggee) {
     if ( this.windowsAdapter.isAccessibleTab(debuggee.tabId) ) {
+      if (debug) {
+        console.log("crx2app.DebuggerAdapter.onDetach: "+debuggee.tabId);
+      }
       this.postMessage({source: this.getPath(), method: "onDetach", params:[debuggee]}); 
     }
   },
