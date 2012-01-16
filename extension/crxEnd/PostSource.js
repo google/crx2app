@@ -22,7 +22,7 @@ function PostSource(path) {
         if (debugMessages) console.log("PostSource.postMessage "+this.port.name+' '+msgObj.source+"."+msgObj.method, msgObj);
         this.port.postMessage(msgObj);
       } else {// else our port is not open
-        console.error("PostSource.postMessage no port for "+path);
+        console.error("PostSource.postMessage no port for "+path+" cannot send "+msgObj.source+"."+msgObj.method, msgObj);
       }
     },  
   
