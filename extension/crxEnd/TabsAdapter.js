@@ -41,15 +41,17 @@ TabsAdapter.prototype = {
       }
     },
   
-    remove: function(serial, indices) {
-      if (typeof indices === 'number') {
-        indices = [indices];
+    remove: function(serial, tabIds) {
+      if (typeof tabIds === 'number') {
+        tabIds = [tabIds];
       }
-      var indexToId = this.windowsAdapter.chromeTabIds;
-      var chromeIndices = indices.map(function(index) {
-        return indexToId[index];
-      });
-      chrome.tabs.remove(chromeIndices, this.noErrorPosted);
+      tabIds.forEach(function(tabId) {
+        var index = this.windowsAdapter.chromeTabIds.indexOf(tabId);
+        if (index !== -1) {
+          chrome.tabs.remove(tabId, this.noErrorPosted);
+        }
+      }.bind(this));
+      
     }
   },
   //---------------------------------------------------------------------------------------------------------
