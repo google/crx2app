@@ -28,7 +28,6 @@ function DebuggerAdapter(windowsAdapter) {
   
   this._bindListeners();
   this.api = ['attach', 'sendCommand', 'detach'];
-  this.addListeners();
 }
 
 DebuggerAdapter.path = 'chrome.debugger';
