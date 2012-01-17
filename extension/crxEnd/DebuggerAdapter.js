@@ -61,14 +61,17 @@ DebuggerAdapter.prototype = {
         return;
       }
       
-      var commandResponse = function(result) {
+      var commandResponse = function(response) {
         if (chrome.extension.lastError) {
           console.error("sendCommand FAILS "+chrome.extension.lastError, chrome.extension.lastError);
         }
         if (debug) {
-          console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, result);
+          console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, response);
         }
-        this.onResponse(serial, {method: method, params:params}, result);
+        if (method === "Debugger.getScriptSource") {
+          response = {id: params.id, result: response, error: response.error}; // http://code.google.com/p/chromium/issues/detail?id=110396
+        }
+        this.onResponse(serial, {method: method, params:params}, response);
       }.bind(this);
 
       if (debug) {
