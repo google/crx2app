@@ -82,14 +82,15 @@ WindowsAdapter.prototype = {
         chrome.windows.onRemoved.addListener(this.onRemoved);
         this.listening = true;
       }
-      // Notify the app of the new window, as a response
-      this.postMessage({source:this.getPath(), method:'onCreated', params:[win], serial: serial});
-      
       // We already missed the onCreated event for the tab, it came before window onCreated, 
       // and did not pass the barrier. 
       // So send one now for the new window's only tab
       var tab = win.tabs[0];
       this.tabAdapter.onCreated(tab);
+      
+      // Notify the app of the new window, as a response.
+      // The tabAdapter sends onCreated for the tab, and it may arrive first, but we need to record the tab before responding
+      this.postMessage({source:this.getPath(), method:'onCreated', params:[win], serial: serial});
     } // else not a response, so not one our app created, so drop the event.
   },
   
