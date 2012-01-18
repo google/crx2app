@@ -6,7 +6,7 @@ define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall
 function(              MetaObject,                 Q,               JSONMarshall,               chrome,                ChromeDebuggerProxy) {
 
   var ChromeProxy = MetaObject.extend(JSONMarshall, {
-  
+    
     initialize: function(connection, eventHandlers) {
       this.connection = connection;
     
@@ -20,6 +20,8 @@ function(              MetaObject,                 Q,               JSONMarshall
       
       this.debugger = {}; // TODO event handlers
       this.buildPromisingCalls(chrome.debugger, this.debugger, connection);
+      
+      this.debug = false;
     },
   
     getConnection: function(connection) {
@@ -54,18 +56,23 @@ function(              MetaObject,                 Q,               JSONMarshall
       var deferred = Q.defer();
       var win = this.promiseNewWindow();
       Q.when(win, function(win) {
-      
-        console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
+        if (this.debug) {
+          console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
+        }
         var tabId = win.tabs[0].id;
       
         var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId}, debuggerEventHandlers);
         this.debugger.attach({tabId: tabId}, "0.1", function() {
-          console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
+          if (this.debug) {
+            console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
+          }
 
           var enabled = debuggerProxy.Debugger.enable();
     
-          Q.when(enabled, function(enabled) {          
-            console.log("ChromeProxy openDebuggerProxy enabled", enabled);
+          Q.when(enabled, function(enabled) {
+            if (this.debug) {
+              console.log("ChromeProxy openDebuggerProxy enabled", enabled);
+            }
 
             this.tabs.update(tabId, {url: url}, function(tab) {
               return deferred.resolve(debuggerProxy);

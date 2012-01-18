@@ -5,7 +5,7 @@
 
 define(['crx2app/lib/q/q'], function (Q) {
   
-  var debug = true;
+  var debug = false;
   
   // A left paren ( followed by any not-right paren ) followed by right paren
   var reParamList = /\(([^\)]*)\)/; 
