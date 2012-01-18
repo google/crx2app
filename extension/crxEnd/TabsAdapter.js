@@ -63,7 +63,7 @@ TabsAdapter.prototype = {
     var tabAdapter = this;
     this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
       // |this| is windowsAdapter inside of barrier()
-      this.addTab(chromeTab);
+      this.addTab(chromeTab.id);
       this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: [chromeTab]});
       tabAdapter.warnAttached(chromeTab.id);     
     });
