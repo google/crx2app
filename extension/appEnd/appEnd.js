@@ -14,7 +14,7 @@ function getChromeExtensionPipe(){
 
     // Announce to the extn that we are running and
     // ask the extn to give us a port name unique to this connection
-    attach: function(callback) {
+    attach: function(callback, errback) {
       if (!chrome || !chrome.extension) {
         throw new Error("Must be loaded into an iframe using a chrome extension url");
       }
@@ -22,7 +22,7 @@ function getChromeExtensionPipe(){
         name:    getChromeExtensionPipe.NAME, 
         version: getChromeExtensionPipe.VERSION
       };
-      chrome.extension.sendRequest(request, this.onAttach.bind(this, callback));
+      chrome.extension.sendRequest(request, this.onAttach.bind(this, callback, errback));
     },
 
     detach: function() {
@@ -30,11 +30,11 @@ function getChromeExtensionPipe(){
     },
     // Get the assigned name of the port and connect to it
     //
-    onAttach: function(callback, response) {
+    onAttach: function(callback, errback, response) {
       if (response.error) {
         var msg = response.error+": "+response.origin;
         msg += "\n Check cxr2app options in Chrome's Extension page";
-        alert(msg);
+        errback(msg);
         return;
       }
       if (!response.name) {

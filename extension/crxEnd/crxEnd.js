@@ -41,34 +41,59 @@ var crxEnd = {
   isOriginAllowed: function(origin) {
     var options = restoreOptions();
     if (options) {
-      if (options.origins) {
-        return options.origins.indexOf(origin) + 1;
+      if (options.allowedSites) {
+        return options.allowedSites.some(function(allowedSite) {
+          var allowedOrigin = ensureOrigin(allowedSite.site);
+          return (allowedOrigin === origin);
+        });
+        
       }
     }
   },
   
   getWindowsAdaptersByOrigin: function(origin, debuggerTab) {
     var windowsAdapter;
-    Object.keys(this.windowsAdaptersByName).forEach(function(name) {
-      if (this.windowsAdaptersByName[name].origin === origin) {
+    Object.keys(this.windowsAdaptersByName).some(function(name) {
+      if (this.windowsAdaptersByName[name].debuggerOrigin === origin) {
         windowsAdapter = this.windowsAdaptersByName[name];
+        return windowsAdapter;
       }
     }, this);
-    
-    if (!windowsAdapter) {  // then this origin has not been seen
-      if (this.isOriginAllowed(origin)) {
-        // then we need to create one for this origin
-        this.chromeAdapters = this.adapterFactory(origin, debuggerTab);
-        windowsAdapter = this.chromeAdapters['chrome.windows'];
-        this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
-      } // else no adapter for you
+    return windowsAdapter;
+  },
+  
+  createWindowsAdapter: function(validOrigin, debuggerTab) {
+      this.chromeAdapters = this.adapterFactory(validOrigin, debuggerTab);
+      var windowsAdapter = this.chromeAdapters['chrome.windows'];
+      this.windowsAdaptersByName[windowsAdapter.name] = windowsAdapter;
+      return windowsAdapter;
+  },
+  
+  createOrReuseWindowsAdapter: function(validOrigin, debuggerTab){
+    var windowsAdapter = this.getWindowsAdaptersByOrigin(validOrigin, debuggerTab);
+    if (!windowsAdapter) {  // then this validOrigin has not been seen
+      windowsAdapter = this.createWindowsAdapter(validOrigin, debuggerTab);
     } else {                
       // we can reuse the existing adapter
-      delete this.windowsAdaptersByName[windowsAdapter.name]; // after disassociating it from our list,
-      windowsAdapter.port.disconnect();                       // disconnecting the channel,
-      windowsAdapter.setPort(null);                           // and clearing its state
+      if (windowsAdapter.port) {
+        windowsAdapter.port.disconnect();                       // disconnecting the channel,
+        windowsAdapter.setPort(null);                           // and clearing its state
+      }
     }
     return windowsAdapter;
+  },
+  
+  checkDebuggerOrigin: function(debuggerURL, onValid, onInvalid) {
+      var origin = ensureOrigin(debuggerURL);
+      if (origin) {
+        if (this.isOriginAllowed(origin)) {
+          onValid(origin);
+        } else { // else not allowed to use us
+          onInvalid("Web Origin Not Allowed "+origin+", Check chrome://extensions options");
+        }
+      } else {// else not valid url origin
+        onInvalid("No valid Web Origin in URL: "+debuggerURL);
+      }
   },
   
   // introduction callback from content script
@@ -76,24 +101,19 @@ var crxEnd = {
     // Do I know you?
     if (sender.tab && request.name === getChromeExtensionPipe.NAME) {
       
-      var origin = ensureOrigin(sender.tab.url);
-      if (origin) {
-        var windowsAdapter = this.getWindowsAdaptersByOrigin(origin, sender.tab);
-        if (windowsAdapter) {
-      
-          // prepare for connection
-          if ( !chrome.extension.onConnect.hasListener(this.onConnect) ) {
-            chrome.extension.onConnect.addListener(this.onConnect);
-          }
-        
-          // give the proxy it's name, ending our introduction
-          sendResponse({name: windowsAdapter.name});
-          return;
-        } // else not allowed to use us
-      } // else not valid url origin
-      sendResponse({error: "Web Origin Not Allowed", url: sender.tab.url, origin: origin});
+      this.checkDebuggerOrigin(sender.tab.url, function onValid(validOrigin){
+        var windowsAdapter = this.createOrReuseWindowsAdapter(validOrigin, sender.tab);
+        // prepare for connection
+        if ( !chrome.extension.onConnect.hasListener(this.onConnect) ) {
+          chrome.extension.onConnect.addListener(this.onConnect);
+        }
+        // give the proxy it's name, ending our introduction
+        sendResponse({name: windowsAdapter.name});
+      }.bind(this), function onInvalid(msg){
+         sendResponse({error: msg});
+      }.bind(this));
+       
     } // else not our caller
-    return;
   },
   
   // When the app connects its port has the name we gave it.

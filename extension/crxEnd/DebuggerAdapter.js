@@ -42,7 +42,6 @@ DebuggerAdapter.prototype = {
       if (!this._checkDebuggee(debuggee)) {
         return;
       }
-      this.debuggeeTabIds.push(debuggee.tabId);
     
       this.addListeners();
       
@@ -114,6 +113,7 @@ DebuggerAdapter.prototype = {
       if (debug) {
         console.log(serial+":  crx2app.DebuggerAdapter.onAttach: "+debuggee.tabId);
       }
+      this.debuggeeTabIds.push(debuggee.tabId);
       this.postMessage({source: this.getPath(), method: "onAttach", serial: serial, params:[debuggee]});
     }
   },
@@ -143,7 +143,9 @@ DebuggerAdapter.prototype = {
       return false;
     }
     if (!this.windowsAdapter.isAccessibleTab(debuggee.tabId)) {
-       this.postError("Debuggee tabId "+debuggee.tabId+" is not accessible");
+       var msg = "Debuggee tabId "+debuggee.tabId+" is not accessible";
+       console.error(msg);
+       this.postError(msg);
        return false;
     }
 	return true;

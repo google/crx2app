@@ -62,14 +62,9 @@ WindowsAdapter.prototype = {
     this.debugAdapter = debugAdapter;
   },
   
-  addTab: function(tab) {
-    this.chromeTabIds.push(tab.id);
+  addTab: function(tabId) {
+    this.chromeTabIds.push(tabId);
   },
-  
-  removeTab: function(index) {
-    this.chromeTabIds.splice(index, 1);
-  },
-
   
   //------------------------------------------------------------------------------------ 
   // callback from chrome.windows.create

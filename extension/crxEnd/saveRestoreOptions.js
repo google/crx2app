@@ -4,17 +4,20 @@
 /*globals document window */
 
 // used by options.html and crxEnd.js 
-// options.origins is array of origin strings
+// options.allowedSites is array of {site: url, name: string}
 
 function saveOptions() {
-  var options = {origins: []};
-  var originsTable = document.getElementById('origins');
-  var originElts = originsTable.getElementsByClassName('origin');
+  var options = {allowedSites: []};
+  var allowedSitesTable = document.getElementById('origins');
+  var originElts = allowedSitesTable.getElementsByClassName('origin');
   for(var i = 0; i < originElts.length; i++) {
     var originElt = originElts[i];
     var origin = originElt.value;
+    var contextMenuNameElt = originElt.parentElement.parentElement.querySelector('.contextMenuId');
+    
     if (origin) {
-      options.origins.push(origin);
+      var name = contextMenuNameElt.value || '(none)';
+      options.allowedSites.push({site: origin, name: name});
     }
   }
   

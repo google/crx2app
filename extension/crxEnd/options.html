@@ -22,9 +22,9 @@ function setDebug(options, setting) {
 function restore() {
   var options = restoreOptions();
   if (options) {
-    var origins = options.origins;
-    if (origins && origins instanceof Array) {
-      origins.forEach(addRow);
+    var sites = options.allowedSites;
+    if (sites && sites instanceof Array) {
+      sites.forEach(addRow);
     }
     setDebug(options, 'debugConnection');
     setDebug(options, 'debugMessages');
@@ -46,61 +46,42 @@ function createRow() {
   return cloneElementById('templateRow');
 }
 
-function addRow(origin) {
-  origin = ensureOrigin(origin);
+function addRow(option) {
+  var origin = ensureOrigin(option.site);
+  if (!origin) {
+    throw new Error(option.site+" does not have a valid origin");
+  }
   var row = createRow();
   var input = row.getElementsByClassName('origin')[0];
-  input.value = origin;
+  input.value = option.site;
+  input = row.querySelector('.contextMenuId');
+  input.value = option.name;
 }
 
-// From editing to previewing
-function preview(row) {
-  var originElt = row.getElementsByClassName('origin')[0];
-  var maybeOrigin = originElt.value;
-  var origin = ensureOrigin(maybeOrigin);
-  originElt.value = origin;
-
-  if (origin) {
-    // open an iframe and preview the origin as a URI
-    var previewRow = cloneElementById('previewRow');
-    previewRow.parentNode.removeChild(previewRow);
-    row.parentNode.insertBefore(previewRow, row.nextSibling);
-    var iframe = previewRow.getElementsByTagName('iframe')[0];
-    iframe.setAttribute('src', origin);
-  
-    // convert the UI to reflect statePreviewing
-    originElt.setAttribute('disabled', 'disabled');
-    row.classList.remove('stateEditing');
-    row.classList.add('statePreviewing');
-  } // else stay in editing
-}
-
-function unpreview(row) {
-  // Take out the row with the preview iframe
-  row.parentElement.removeChild(row.nextSibling);
-  
-  row.classList.remove('statePreviewing');
-  row.classList.add('stateSaved');
-}
-
-// From previewing to saved
+// From editing to saved
 function save(row) {
   saveOptions();
   console.log('save', row);
-  unpreview(row);
+  var origin = row.getElementsByClassName('origin')[0];
+  origin.setAttribute('disabled', 'disabled');
+  var contextMenuId = row.querySelector('.contextMenuId');
+  contextMenuId.setAttribute('disabled', 'disabled');
+  row.classList.remove('stateEditing');
+  row.classList.add('stateSaved');
 }
 
 // From saved to editing
 function edit(row) {
   var origin = row.getElementsByClassName('origin')[0];
   origin.removeAttribute('disabled');
+  var contextMenuId = row.querySelector('.contextMenuId');
+  contextMenuId.removeAttribute('disabled');
   row.classList.remove('stateSaved');
   row.classList.add('stateEditing');
 }
 
 var rowTransitions = {
-  'stateEditing': preview,
-  'statePreviewing': save,
+  'stateEditing': save,
   'stateSaved': edit
 };
 
@@ -132,9 +113,6 @@ function revertState(event) {
     if (state === 'stateEditing') {
       row.parentElement.removeChild(row);
       saveOptions();
-    } else if (state === 'statePreviewing') {
-      unpreview(row);
-      edit(row);
     } else if (state === 'stateSaved') {
       row.parentElement.removeChild(row);
       saveOptions();
@@ -164,11 +142,9 @@ function onLoad() {
 window.addEventListener('load', onLoad, false);
 
 window.onbeforeunload = function(event) {
-  var previewings = document.getElementsByClassName('statePreviewing');
   var editings = document.getElementsByClassName('stateEditing');
   
-  if ( (previewings.length > 0) ||
-       (editings.length > 0) ) {
+  if ( editings.length > 0 ) {
      event.returnValue = "You have unsaved edits";
      return event.returnValue;
   }
@@ -199,25 +175,17 @@ body {
 #origins iframe {
   width: 100%;
 }
-#previewRow {
-  display: none;
-}
 #templateRow {
   visibility: hidden;
 }
 .edit {
   display: none;
 }
-.preview {
-  display: none;
-}
+
 .save {
   display: none;
 }
-.stateEditing .preview {
-  display: inline;
-}
-.statePreviewing .save {
+.stateEditing .save {
   display: inline;
 }
 .stateSaved .edit {
@@ -246,24 +214,30 @@ body {
 <b class='warning'>
 Warning: the Web sites you add in the table below will have some powers of Chrome extensions.
 </b>
-
+<ol>
+<li>Click <code>Add Allowed Site</code></li>
+<li>Type a URL in the Allowed Sites box</li>
+<li>Optional: add a name under <i>Debug With</i> to add the site to the Chrome browser right-click menu</li>
+<li>Save</li>
+</ol>
 <div class="tableSurround">
 <table id="origins">
 <tbody>
   <tr>
-    <th>Action</th><th>Allowed Origin</th>
+    <th>Action</th><th>Allowed Sites</th><th><i>Debug With</i> Name</th>
   </tr>
   <tr id="templateRow" class="stateSaved"><!-- Don't use any ids in this element -->
     <td>
       <button class="action" onclick="changeState(event);"> <!-- only one of these states will be visible at any time -->
         <span class='edit'>Edit</span><!-- stateSaved, to go stateEditing -->
-        <span class='preview'>Preview</span><!-- stateEditing, go to statePreviewing -->
         <span class='save'>Save</span> <!-- statePreviewing, go to stateSaved -->
       </button>
     </td>
     <td>
       <input class="origin" type="url" size="80" disabled='disabled' />
     </td>
+    <td>
+      <input class="contextMenuId" type='text' disabled='disabled' value='(none)'/>
     <td>
       <button class="action" onclick="revertState(event);"> <!-- only one of these states will be visible at any time -->
         <span class='remove'>Remove</span><!-- stateSaved, delete; stateEditing, go to statePreviewing -->
@@ -272,15 +246,9 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
     </td>
   </tr>
   <tr>
-    <td id="addRow" colspan="3"><button>Add Allowed Origin</button><span> You may enter URLs, they will be shortened to origins</span></td>
+    <td id="addRow" colspan="4"><button>Add Allowed Site</button><span> All pages with the same Web Origin will be allowed</span></td>
   </tr>
-  <tr  id="previewRow">
-    <td colspan="3">
-      <a name="preview">
-        <iframe class="previewFrame" src="about:blank"></iframe>
-      </a>
-    </td>
-  </tr>
+  
 </tbody>
 </table>
 </div>
