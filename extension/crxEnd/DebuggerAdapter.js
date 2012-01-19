@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global console*/
+/*global console window*/
 
 
 /*
@@ -32,6 +32,8 @@ function DebuggerAdapter(windowsAdapter) {
 
 DebuggerAdapter.path = 'chrome.debugger';
 
+DebuggerAdapter.cleanUpDebuggees = {};
+DebuggerAdapter.reloadTimeout = debug ? 70000 : 2000; 
 
 DebuggerAdapter.prototype = {
 
@@ -95,7 +97,10 @@ DebuggerAdapter.prototype = {
       }
       chrome.debugger.detach({tabId: debuggee.tabId}, this.noErrorPosted);
       
-      this.onRemoved(debuggee.tabId, {});
+      DebuggerAdapter.cleanUpDebuggees[debuggee.tabId] = window.setTimeout(function cleanUp() {
+        delete DebuggerAdapter.cleanUpDebuggees[debuggee.tabId];
+        this.onRemoved(debuggee.tabId, {});  // disallow (re-) attach
+      }.bind(this), DebuggerAdapter.reloadTimeout);
     }
   },
   
@@ -113,7 +118,16 @@ DebuggerAdapter.prototype = {
       if (debug) {
         console.log(serial+":  crx2app.DebuggerAdapter.onAttach: "+debuggee.tabId);
       }
-      this.debuggeeTabIds.push(debuggee.tabId);
+      
+      if (DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]) {  // then we reloaded the debugger
+        window.clearTimeout(DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]);
+        if (this.debuggeeTabIds.indexOf(debuggee.tabId) === -1) {
+          console.error("crxEnd.DebuggerAdapter.onAttach cleared the cleanup of "+debuggee.tabId+" but it was not a known tab");
+        }
+      } else {
+        this.debuggeeTabIds.push(debuggee.tabId);
+      }
+      
       this.postMessage({source: this.getPath(), method: "onAttach", serial: serial, params:[debuggee]});
     }
   },
