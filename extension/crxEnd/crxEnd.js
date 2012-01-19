@@ -36,6 +36,7 @@ var crxEnd = {
   detach: function() {
     chrome.extension.onRequest.removeListener(this.onRequest);
     this.adapterFactory['chrome.tabs']._disconnect();
+    // TODO DebugAdapter
   },
   
   isOriginAllowed: function(origin) {

@@ -153,8 +153,8 @@ DebuggerAdapter.prototype = {
   
   disconnect: function() {
     this.debuggeeTabIds.forEach(function (tabId) {
-      this.chromeWrappers.detach(undefined, tabId);
-    });
+      this.chromeWrappers.detach.apply(this, [undefined, {tabId: tabId}]);
+    }.bind(this));
     this.removeListeners();
   },
   
