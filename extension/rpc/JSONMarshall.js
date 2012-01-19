@@ -140,8 +140,9 @@ define(['crx2app/lib/q/q'], function (Q) {
             } else {
               if (object.jsonObjectHandler) {
                 object.jsonObjectHandler.apply(object, [data]);              
+              } else {
+                console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
               }
-              console.warn("JSONMarshal.recvResponse dropped data, no handler for "+method, data);
             }
           } else {
             console.warn("JSONMarshal.recvResponse dropped data, no handlers for object "+objectKey, data);
