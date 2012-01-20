@@ -3,19 +3,22 @@
 
 /*global define console */
 
-define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/remote', 'crx2app/rpc/chrome'], 
+define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chromeDebuggerRemote', 'crx2app/rpc/chrome'], 
   function(MetaObject, Q, JSONMarshall, remote, chrome) {
   
+  
+  // See ChromeProxy for methods that return this object.
   var ChromeDebuggerProxy = MetaObject.extend(JSONMarshall, {
   
-    initialize: function(chromeProxy, debuggee, eventHandlers) {
+    initialize: function(chromeProxy, debuggee) {
       this._debuggee = debuggee; // see http://code.google.com/chrome/extensions/debugger.html
-      this.buildEventHandlers(this.flattenDomains(remote.events), 'chrome.debugger', this.flattenDomains(eventHandlers));
              // We prefix the argument list with our 'debuggee' object containing the tabId
       this.build2LevelPromisingCalls(remote, this, chromeProxy, this._debuggee);
     },
 
-    // See ChromeProxy for methods that return this object.
+    registerHandlers: function(domain, eventHandlers) {
+      this.buildEventHandlers(this[domain].events, domain, eventHandlers);
+    },
     
     _detach: function(chromeProxy) {
       JSONMarshall._detach.apply(this, [chromeProxy.getConnection()]);
