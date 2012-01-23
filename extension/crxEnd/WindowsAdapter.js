@@ -24,6 +24,10 @@ function WindowsAdapter(origin, debuggerTab) {
   this.name = WindowsAdapter.path + '.' + WindowsAdapter.instanceCounter;
   this.chromeWindowIds = [];  // only these ids can be used by client
   this.chromeTabIds = [];     // only these tabs can be used by client
+
+  // chrome.debugger calls must complete before any other chrome.* calls
+  this.chromeQueue = []; 
+    
   this._bindListeners();
   // chrome.window functions available to client WebApps
   this.api = ['create', 'getAll'];
@@ -111,6 +115,30 @@ WindowsAdapter.prototype = {
       });
     }.bind(this));
     this.postMessage({source:this.getPath(), method:'onGetAll', params:cleanWindows, serial: serial});
+  },
+
+  //------------------------------------------------------------------------------------------------------
+    
+  blockChromeCalls: function() {
+    this.blocked = true;
+  },
+  
+  stageChromeCall: function(method, obj, params) {
+    if (this.blocked) {
+      var args = Array.prototype.slice.call(arguments, 0);
+      this.chromeQueue.push(args);
+    } else {
+      // send on to chrome
+      method.apply(obj, params);
+    }
+  },
+  
+  releaseChromeCalls: function() {
+    this.blocked = false;
+    while(this.chromeQueue.length && !this.blocked) {
+      var chromeCall = this.chromeQueue.shift();
+      this.stageChromeCall.apply(this, chromeCall);
+    }
   },
 
   //---------------------------------------------------------------------------------------------------------

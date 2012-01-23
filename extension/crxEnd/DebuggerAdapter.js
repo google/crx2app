@@ -61,6 +61,8 @@ DebuggerAdapter.prototype = {
         return;
       }
       
+      this.windowsAdapter.blockChromeCalls();  // wait for chrome.debugger to respond
+      
       var commandResponse = function(response) {
         if (chrome.extension.lastError) {
           console.error("sendCommand FAILS "+chrome.extension.lastError, chrome.extension.lastError);
@@ -77,6 +79,8 @@ DebuggerAdapter.prototype = {
         }
         
         this.onResponse(serial, {method: method, params:params}, response);
+        this.windowsAdapter.releaseChromeCalls();
+        
       }.bind(this);
 
       if (debug) {

@@ -29,6 +29,7 @@ var crxEnd = {
   attach: function(adapterFactory) {
     this.adapterFactory = adapterFactory;
     this.windowsAdaptersByName = {};
+    
     // prepare for introduction call from content-script
     chrome.extension.onRequest.addListener(this.onRequest);
   },
@@ -137,7 +138,7 @@ var crxEnd = {
       console.error("crx2app/crxEnd: no windowsAdapter for port.name: "+port.name);
     }
   },
-  
+
   // From App 
   onMessage: function(windowsAdapter, jsonObj) {
     if(debugMessages) {
@@ -151,8 +152,7 @@ var crxEnd = {
         jsonObj.serial = jsonObj.serial || jsonObj.id; // devtools uses 'id'
         if (jsonObj.params instanceof Array) {
           if (typeof jsonObj.serial === 'number') {
-            // send on to chrome
-            method.apply(target, [jsonObj.serial].concat(jsonObj.params) );
+            windowsAdapter.stageChromeCall(method, target, [jsonObj.serial].concat(jsonObj.params));
           } else {
             windowsAdapter.postError("serial \'"+jsonObj.serial+"\' is not a number; "+jsonObj.target+"."+jsonObj.method, jsonObj);
           }
