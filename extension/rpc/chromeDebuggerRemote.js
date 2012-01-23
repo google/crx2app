@@ -1,14 +1,30 @@
-/* Machine generated from inspector/Inspector.json version: 0.1 on Thu Jan 19 2012 14:54:46 GMT-0800 (PST) */
+/* Machine generated from inspector/Inspector.json version: 0.1 on Mon Jan 23 2012 12:15:21 GMT-0800 (PST) */
 
-define([], function() {
+(function (definition) {
 
-var chrome = chrome || {};
-chrome.debugger = chrome.debugger || {};
+    // This file will function properly as a <script> tag, or a module
+    // using CommonJS and NodeJS or RequireJS module formats. In
+    // Common/Node/RequireJS, the module exports the chromeDebuggerRemote API and when
+    // executed as a simple <script>, it chromeDebuggerRemote a Q global instead.
 
-chrome.debugger.remote = {version:  0.1};
+    // RequireJS
+    if (typeof define === 'function') {
+        define(definition);
+    // CommonJS
+     } else if (typeof exports === 'object') {
+         definition(exports);
+     // <script>, create global
+     } else {
+         definition(chromeDebuggerRemote = {});
+     }
+
+})(function (exports) {
+
+var chromeDebuggerRemote = exports;
+chromeDebuggerRemote.version = 0.1;
 
 /* unsupported */ 
-chrome.debugger.remote.Inspector = {
+chromeDebuggerRemote.Inspector = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -22,14 +38,14 @@ chrome.debugger.remote.Inspector = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.Memory = {
+chromeDebuggerRemote.Memory = {
   commands: {
     getDOMNodeCount: /*count */ function(){},
   },
 };
 
 
-chrome.debugger.remote.Page = {
+chromeDebuggerRemote.Page = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -53,7 +69,7 @@ chrome.debugger.remote.Page = {
 };
 
 
-chrome.debugger.remote.Runtime = {
+chromeDebuggerRemote.Runtime = {
   commands: {
     evaluate: /*result,wasThrown */ function(expression, objectGroup, includeCommandLineAPI, doNotPauseOnExceptions, frameId, returnByValue){},
     callFunctionOn: /*result,wasThrown */ function(objectId, functionDeclaration, arguments, returnByValue){},
@@ -65,7 +81,7 @@ chrome.debugger.remote.Runtime = {
 };
 
 
-chrome.debugger.remote.Console = {
+chromeDebuggerRemote.Console = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -81,7 +97,7 @@ chrome.debugger.remote.Console = {
 };
 
 
-chrome.debugger.remote.Network = {
+chromeDebuggerRemote.Network = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -110,7 +126,7 @@ chrome.debugger.remote.Network = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.Database = {
+chromeDebuggerRemote.Database = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -125,7 +141,7 @@ chrome.debugger.remote.Database = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.DOMStorage = {
+chromeDebuggerRemote.DOMStorage = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -140,7 +156,7 @@ chrome.debugger.remote.DOMStorage = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.ApplicationCache = {
+chromeDebuggerRemote.ApplicationCache = {
   commands: {
     getFramesWithManifests: /*frameIds */ function(){},
     enable:  function(){},
@@ -154,7 +170,7 @@ chrome.debugger.remote.ApplicationCache = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.FileSystem = {
+chromeDebuggerRemote.FileSystem = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -162,7 +178,7 @@ chrome.debugger.remote.FileSystem = {
 };
 
 
-chrome.debugger.remote.DOM = {
+chromeDebuggerRemote.DOM = {
   commands: {
     getDocument: /*root */ function(){},
     requestChildNodes:  function(nodeId){},
@@ -206,7 +222,7 @@ chrome.debugger.remote.DOM = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.CSS = {
+chromeDebuggerRemote.CSS = {
   commands: {
     enable:  function(){},
     disable:  function(){},
@@ -231,7 +247,7 @@ chrome.debugger.remote.CSS = {
 };
 
 
-chrome.debugger.remote.Timeline = {
+chromeDebuggerRemote.Timeline = {
   commands: {
     start:  function(maxCallStackDepth){},
     stop:  function(){},
@@ -242,7 +258,7 @@ chrome.debugger.remote.Timeline = {
 };
 
 
-chrome.debugger.remote.Debugger = {
+chromeDebuggerRemote.Debugger = {
   commands: {
     /* unsupported */ causesRecompilation: /*result */ function(){},
     /* unsupported */ supportsNativeBreakpoints: /*result */ function(){},
@@ -277,7 +293,7 @@ chrome.debugger.remote.Debugger = {
 };
 
 
-chrome.debugger.remote.DOMDebugger = {
+chromeDebuggerRemote.DOMDebugger = {
   commands: {
     setDOMBreakpoint:  function(nodeId, type){},
     removeDOMBreakpoint:  function(nodeId, type){},
@@ -289,7 +305,7 @@ chrome.debugger.remote.DOMDebugger = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.Profiler = {
+chromeDebuggerRemote.Profiler = {
   commands: {
     causesRecompilation: /*result */ function(){},
     isSampling: /*result */ function(){},
@@ -317,7 +333,7 @@ chrome.debugger.remote.Profiler = {
 };
 
 /* unsupported */ 
-chrome.debugger.remote.Worker = {
+chromeDebuggerRemote.Worker = {
   commands: {
     setWorkerInspectionEnabled:  function(value){},
     sendMessageToWorker:  function(workerId, message){},
@@ -333,8 +349,8 @@ chrome.debugger.remote.Worker = {
   }
 };
 
+return chromeDebuggerRemote;
+
 /* copyright 2011 Google, inc. johnjbarton@google.com Google BSD License */
 /* See https://github.com/johnjbarton/atopwi/blob/master/tailFeathers.html */
-
-return chrome.debugger.remote;
-});
+)};
