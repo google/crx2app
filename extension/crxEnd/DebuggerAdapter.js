@@ -113,7 +113,7 @@ DebuggerAdapter.prototype = {
   // Forward debugger events as JSON
   onEvent: function(debuggee, method, params) {
     if ( this.windowsAdapter.isAccessibleTab(debuggee.tabId) ) {
-      this.postMessage({source: this.getPath(), method: method, params: params}); 
+      this.postMessage({source: this.getPath()+'.remote', method: method, params: params}); 
     }
   },
   
