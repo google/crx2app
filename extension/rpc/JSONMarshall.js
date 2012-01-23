@@ -184,15 +184,19 @@ define(['crx2app/lib/q/q'], function (Q) {
   };
   
   // The chrome.debugger API has 'domains' like Console, Debugger. 
-  // Each domain has functions as properties.
+  // Each domain has 'commands' and 'events' functions as properties.
+  // obj: remote interface with domain properties
+  // prop: 'commands' or 'events'
   // 
-  JSONMarshall.flattenDomains = function(obj) {
+  JSONMarshall.flattenDomains = function(obj, prop) {
     var flatObj = {};
     Object.keys(obj).forEach(function flattenDomain(domainName) {
-      var domain = obj[domainName];
-      Object.keys(domain).forEach(function buildProperty(name) {
-        flatObj[domainName+'.'+name] = domain[name];
-      });
+      var bumpy = obj[domainName][prop];
+      if (bumpy) {
+        Object.keys(bumpy).forEach(function buildProperty(name) {
+          flatObj[domainName+'.'+name] = bumpy[name];
+        });
+      } // else not a domain, eg version
     });
     return flatObj;
   };
@@ -216,7 +220,8 @@ define(['crx2app/lib/q/q'], function (Q) {
   // eventHandlers: {Debugger: {functions}, Console: {functions}}
   JSONMarshall.buildEventHandlers = function(iface, objectKey, impl) {
     this.jsonHandlers = this.jsonHandlers || {};
-    var object = this.jsonHandlers[objectKey] = {};
+    this.jsonHandlers[objectKey] = this.jsonHandlers[objectKey] || {};
+    var object = this.jsonHandlers[objectKey];
     var handlerNames = Object.keys(iface);
     handlerNames.forEach(function buildHandler(handlerName) {
       var handlerSpec = iface[handlerName]; // an empty function
@@ -228,6 +233,12 @@ define(['crx2app/lib/q/q'], function (Q) {
     }.bind(this));
   };
    
+  JSONMarshall.build2LevelEventHandlers = function(iface, impl) {
+    var flatFace = this.flattenDomains(iface, 'events');  // eg "Debugger.globalObjectCleared"
+    var flatImpl = this.flattenDomains(impl, 'events');
+    this.buildEventHandlers(flatFace, 'chrome.debugger.remote', flatImpl);
+  };
+  
   // Walk the API and implement each function to send over channel.
   JSONMarshall.buildPromisingCalls = function(iface, impl, channel, debuggee) {
     var methods = Object.keys(iface.api);
@@ -241,15 +252,18 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   // chrome.debugger remote methods have domain.method names
   JSONMarshall.build2LevelPromisingCalls = function(iface, impl, chromeProxy, debuggee) {
-    var api = iface.api;
-    var domains = Object.keys(api);
+
+    var domains = Object.keys(iface);
+    
     domains.forEach(function buildSend(domain) {
-      impl[domain] = {};
-      var methods = Object.keys(api[domain]);
-      methods.forEach(function buildMethod(method) {
-        // each RHS is a function returning a promise
-        impl[domain][method] = makeRemoteDebugSendCommand(chromeProxy, iface.name, domain+'.'+method, debuggee);
-      });
+      if (iface[domain].commands) {
+        impl[domain] = {commands: {}};
+        var methods = Object.keys(iface[domain].commands);
+        methods.forEach(function buildMethod(method) {
+          // each RHS is a function returning a promise
+          impl[domain][method] = makeRemoteDebugSendCommand(chromeProxy, iface.version, domain+'.'+method, debuggee);
+        });
+      } // else no commands
     });
   };
   

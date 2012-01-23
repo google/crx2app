@@ -18,7 +18,7 @@ function(              MetaObject,                 Q,               JSONMarshall
       this.buildEventHandlers(chrome.tabs.events, 'chrome.tabs', this.tabs);
       this.buildPromisingCalls(chrome.tabs, this.tabs, connection);
       
-      this.debugger = {}; // TODO event handlers
+      this.debugger = {}; 
       this.buildPromisingCalls(chrome.debugger, this.debugger, connection);
       
       this.debug = false;
@@ -61,7 +61,9 @@ function(              MetaObject,                 Q,               JSONMarshall
         }
         var tabId = win.tabs[0].id;
       
-        var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId}, debuggerEventHandlers);
+        var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId});
+        debuggerProxy.registerHandlers(this, debuggerEventHandlers);
+        
         this.debugger.attach({tabId: tabId}, "0.1", function() {
           if (this.debug) {
             console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);

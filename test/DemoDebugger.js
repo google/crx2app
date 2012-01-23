@@ -11,9 +11,8 @@ define(  ['crx2app/rpc/ChromeDebuggerProxy'],
   
   var DemoDebugger = ChromeDebuggerProxy.extend({
   
-    // Implement Remote.events
-    eventHandlers: {
-      Debugger: {
+    Debugger: {
+      events: {
         breakpointResolved: function(breakpointId, location) {
           output("DemoDebugger", arguments);
         },
@@ -29,22 +28,12 @@ define(  ['crx2app/rpc/ChromeDebuggerProxy'],
         scriptParsed: function(endColumn, endLine, isContentScript, scriptId, startColumn, startLine, url, p_id) {
           output('scriptParsed '+url);
         }
-      },
-      Timeline: {
-        eventRecorded: function(record) {
-          output("DemoDebugger", arguments);
-        },
-        started: function() {
-          output("DemoDebugger", arguments);
-        },
-        stopped: function() {
-          output("DemoDebugger", arguments);
-        }
       }
     },
 
-    initialize: function(connection) {
-      ChromeDebuggerProxy.initialize.apply(this, [this.eventHandlers, connection]);
+    initialize: function(chromeProxy, debuggee) {
+      ChromeDebuggerProxy.initialize.apply(this, [chromeProxy, debuggee]);
+      this.registerHandlers(chromeProxy, this.Debugger.events);
     }
   
   });

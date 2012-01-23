@@ -83,7 +83,7 @@ function onMessage(event) {
      // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
      // and attach to a new tab, enable debugging and update the page to the given URL.
      var testURL = window.location.toString();
-     var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger.eventHandlers);
+     var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger);
      
      // when we are attached to the given page, test it.
      Q.when(debuggerProxy, function(debuggerProxy) {

@@ -1,4 +1,4 @@
-/* Machine generated from inspector/Inspector.json version: 0.1 on Mon Jan 23 2012 12:15:21 GMT-0800 (PST) */
+/* Machine generated from inspector/Inspector.json version: 0.1 on Mon Jan 23 2012 14:06:29 GMT-0800 (PST) */
 
 (function (definition) {
 
@@ -9,7 +9,7 @@
 
     // RequireJS
     if (typeof define === 'function') {
-        define(definition);
+        define([], definition);
     // CommonJS
      } else if (typeof exports === 'object') {
          definition(exports);
@@ -18,7 +18,7 @@
          definition(chromeDebuggerRemote = {});
      }
 
-})(function (exports) {
+}(function (ignoredRequire, exports) {
 
 var chromeDebuggerRemote = exports;
 chromeDebuggerRemote.version = 0.1;
@@ -353,4 +353,4 @@ return chromeDebuggerRemote;
 
 /* copyright 2011 Google, inc. johnjbarton@google.com Google BSD License */
 /* See https://github.com/johnjbarton/atopwi/blob/master/tailFeathers.html */
-)};
+}));
