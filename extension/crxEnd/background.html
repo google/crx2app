@@ -52,6 +52,7 @@ function obeyOptions() {
   window.debugConnection = options.debugConnection;
   window.debugMessages = options.debugMessages;
   window.debugWarnings = options.debugWarnings;
+  window.debugAdapters = options.debugAdapters;
   
   options.allowedSites.forEach(function(allowedSite) {
     var name = 'Debug With ' + allowedSite.name;  

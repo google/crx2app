@@ -29,6 +29,7 @@ function restore() {
     setDebug(options, 'debugConnection');
     setDebug(options, 'debugMessages');
     setDebug(options, 'debugWarnings');
+    setDebug(options, 'debugAdapters');
   }
   // the default UI will work for no-options-set-yet
 }
@@ -258,6 +259,7 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
   <input type='checkbox' id="debugConnection" onclick='onClickDebug(event)' />Trace connection events<br />
   <input type='checkbox' id="debugMessages" onclick='onClickDebug(event)' />Trace messages<br />
   <input type='checkbox' id="debugWarnings" onclick='onClickDebug(event)' />Trace Warning IO<br />
+  <input type='checkbox' id="debugAdapters" onclick='onClickDebug(event)' />Trace chrome.* adapters<br />
 </div>
 </body>
 </html>

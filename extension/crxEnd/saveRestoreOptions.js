@@ -30,6 +30,9 @@ function saveOptions() {
   var debugWarnings = document.getElementById('debugWarnings');
   options.debugWarnings = debugWarnings.checked;
   
+  var debugAdapters = document.getElementById('debugAdapters');
+  options.debugAdapters = debugAdapters.checked;
+
   var stringified = JSON.stringify(options);
   window.localStorage.setItem('options', stringified);
 }
