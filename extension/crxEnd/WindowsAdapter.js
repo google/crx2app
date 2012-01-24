@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global console */
+/*global console window*/
 
 /*
  Barrier proxy for chrome.windows. One per Debugger domain.
@@ -121,20 +121,30 @@ WindowsAdapter.prototype = {
     
   blockChromeCalls: function() {
     this.blocked = true;
+    if (window.debugAdapters) {
+      console.log("<< chrome calls blocked ---------------------------------");
+    }
   },
   
   stageChromeCall: function(method, obj, params) {
-    if (this.blocked) {
+    if (this.blocked && obj !== this.debugAdapter) {
       var args = Array.prototype.slice.call(arguments, 0);
       this.chromeQueue.push(args);
     } else {
       // send on to chrome
       method.apply(obj, params);
     }
+    if (window.debugAdapters) {
+      console.log("  "+this.chromeQueue.length+" chrome calls queued");
+    }
   },
   
   releaseChromeCalls: function() {
     this.blocked = false;
+    if (window.debugAdapters) {
+      console.log("<< chrome calls unblocked ---------------------------------");
+    }
+
     while(this.chromeQueue.length && !this.blocked) {
       var chromeCall = this.chromeQueue.shift();
       this.stageChromeCall.apply(this, chromeCall);

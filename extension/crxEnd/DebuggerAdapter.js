@@ -12,13 +12,14 @@
 
 function makeDebuggerAdapter(chrome, PostSource, remote) {
 
-var debug = false;
+var debug = window.debugAdapters;
 
 function DebuggerAdapter(windowsAdapter) {
   this.windowsAdapter = windowsAdapter;
   this.windowsAdapter.setDebugAdapter(this);   // backpointer for disconnect
 
   this.debuggeeTabIds = [];
+  this.blockers = 0;
   
   // TODO redo this mess
   var portDelegate = new PostSource(DebuggerAdapter.path);
@@ -62,6 +63,7 @@ DebuggerAdapter.prototype = {
       }
       
       this.windowsAdapter.blockChromeCalls();  // wait for chrome.debugger to respond
+      this.blockers++;
       
       var commandResponse = function(response) {
         if (chrome.extension.lastError) {
@@ -80,8 +82,10 @@ DebuggerAdapter.prototype = {
         }
         
         this.onResponse(serial, {method: method, params:params}, response);
-        this.windowsAdapter.releaseChromeCalls();
-        
+        this.blockers--;
+        if (!this.blockers) {
+          this.windowsAdapter.releaseChromeCalls();
+        }
       }.bind(this);
 
       if (debug) {
