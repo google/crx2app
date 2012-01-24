@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global chrome console */
+/*global chrome console window*/
 
 
 // @return: connection object with attach/detach addListener/postMessage
@@ -34,7 +34,11 @@ function getChromeExtensionPipe(){
       if (response.error) {
         var msg = response.error+": "+response.origin;
         msg += "\n Check cxr2app options in Chrome's Extension page";
-        errback(msg);
+        if (errback) {
+          errback(msg);
+        } else {
+          window.alert(msg);
+        }
         return;
       }
       if (!response.name) {
