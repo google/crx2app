@@ -67,7 +67,7 @@ DebuggerAdapter.prototype = {
       
       var commandResponse = function(response) {
         if (chrome.extension.lastError) {
-          console.error("sendCommand FAILS "+chrome.extension.lastError, chrome.extension.lastError);
+          console.error("sendCommand "+method+" FAILS "+chrome.extension.lastError, chrome.extension.lastError);
           return;
         }
         if (debug) {
