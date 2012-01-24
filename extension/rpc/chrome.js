@@ -15,7 +15,7 @@ define([], function () {
       getAll: function(getInfo, callback){}
     },
     events: {
-      onCreated: function(Window){},
+      onCreated: function(window){},
       onRemoved: function(windowId){}
     },
     types: {
@@ -42,7 +42,7 @@ define([], function () {
       update: function(tabId, updateProperties, callback){}
     },
     events: {
-      onCreated: function(Tab) {},
+      onCreated: function(tab) {},
       onRemoved: function(tabId, removeInfo) {}
     },
     types: {

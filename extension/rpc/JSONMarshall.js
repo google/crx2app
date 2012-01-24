@@ -89,7 +89,7 @@ define(['crx2app/lib/q/q'], function (Q) {
     return function (paramsFromJSON, p_id) {
       var args = [];
       for (var i = 0; i < handler.parameters.length; i++) {
-        args[i] = paramsFromJSON[i];
+        args[i] = paramsFromJSON[handler.parameters[i]];
       }
       args.push(p_id);  // purple specific clock tick postpended
       handler.apply(impl, args);

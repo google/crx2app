@@ -64,7 +64,7 @@ TabsAdapter.prototype = {
     this.windowsAdapter.barrier(chromeTab.windowId, arguments, function(windowId, index) {
       // |this| is windowsAdapter inside of barrier()
       this.addTab(chromeTab.id);
-      this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: [chromeTab]});
+      this.postMessage({source:tabAdapter.getPath(), method: 'onCreated', params: {tab: chromeTab}});
       tabAdapter.warnAttached(chromeTab.id);     
     });
   },
@@ -87,14 +87,14 @@ TabsAdapter.prototype = {
   onUpdated: function(tabId, changeInfo, tab) {
     this.barrier(tabId, arguments, function(tabId, changeInfo, tab) {
       this.warnAttached(tabId);
-      this.postMessage({source: this.getPath(), method: 'onUpdated', params:[tabId, changeInfo, tab]});
+      this.postMessage({source: this.getPath(), method: 'onUpdated', params:{tabId: tabId, changeInfo: changeInfo, tab: tab}});
     });
   },
   
   onRemoved: function(tabId, removeInfo) {
     this.barrier(tabId, arguments, function(tabId, removeInfo, index) {
       this.windowsAdapter.removeTab(index);
-      this.postMessage({source: this.getPath(), method: 'onRemoved', params:[tabId, removeInfo]});
+      this.postMessage({source: this.getPath(), method: 'onRemoved', params:{tabId: tabId, removeInfo: removeInfo}});
     });
   },
   

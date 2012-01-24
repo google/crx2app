@@ -94,7 +94,7 @@ WindowsAdapter.prototype = {
       
       // Notify the app of the new window, as a response.
       // The tabAdapter sends onCreated for the tab, and it may arrive first, but we need to record the tab before responding
-      this.postMessage({source:this.getPath(), method:'onCreated', params:[win], serial: serial});
+      this.postMessage({source:this.getPath(), method:'onCreated', params:{window: win}, serial: serial});
     } // else not a response, so not one our app created, so drop the event.
   },
   
@@ -102,7 +102,7 @@ WindowsAdapter.prototype = {
   onRemoved: function(windowId) {
     this.barrier(windowId, arguments, function(windowId, index) {
       this.chromeWindowIds.splice(index, 1);
-      this.postMessage({source:this.getPath(), method:'onRemoved', params:[]});
+      this.postMessage({source:this.getPath(), method:'onRemoved', params:{}});
     });
   },
 
