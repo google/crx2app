@@ -45,6 +45,10 @@ function adapterFactory(origin, debuggerTab) {
 
 function obeyOptions() {
   var options = restoreOptions();
+  if (!options) {  // maybe our first time
+    return;
+  }
+  
   window.debugConnection = options.debugConnection;
   window.debugMessages = options.debugMessages;
   window.debugWarnings = options.debugWarnings;
