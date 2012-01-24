@@ -56,6 +56,21 @@ WindowsAdapter.prototype = {
   isAccessibleTab: function(tabId) {
     return (this.chromeTabIds.indexOf(tabId) > -1);
   },
+    
+  addTab: function(tabId) {
+    this.chromeTabIds.push(tabId);
+  },
+  
+  removeTab: function(tabId) {
+    var index = this.chromeTabIds.indexOf(tabId);
+    if (index > -1) {
+      this.chromeTabIds.splice(index, 1);
+    } else {
+      if (debugAdapters) {
+        console.info("windowsAdapter attempt to remove "+tabId+", unknown tab");
+      }
+    }
+  },
   
   // Called during construction, for onCreated, and disconnect
   setTabAdapter: function(tabAdapter) {
@@ -65,10 +80,7 @@ WindowsAdapter.prototype = {
   setDebugAdapter: function(debugAdapter) {
     this.debugAdapter = debugAdapter;
   },
-  
-  addTab: function(tabId) {
-    this.chromeTabIds.push(tabId);
-  },
+
   
   //------------------------------------------------------------------------------------ 
   // callback from chrome.windows.create
