@@ -3,11 +3,11 @@
 
 /*globals getChromeExtensionPipe define document*/
 
-define(['crx2app/appEnd/proxyChromePipe'], function(getChromeExtensionPipe) {
+define(['crx2app/appEnd/proxyChromePipe'], function(chromeExtensionPipe) {
 
-  var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+  var iframeDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
 
-  var connection = getChromeExtensionPipe(iframeDomain);
+  var connection = chromeExtensionPipe.createFrom(iframeDomain);
 
   // dynamic iframe load
   //
