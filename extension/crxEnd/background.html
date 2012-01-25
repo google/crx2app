@@ -44,6 +44,11 @@ function adapterFactory(origin, debuggerTab) {
 
 
 function obeyOptions() {
+  window.debugConnection = false;
+  window.debugMessages = false;
+  window.debugWarnings = false;
+  window.debugAdapters = false;
+
   var options = restoreOptions();
   if (!options) {  // maybe our first time
     return;
