@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global window define exports require console */
+/*global window define exports require console chromeExtensionPipe */
 
 // Listens for postMessage events and forwards them as if this was the chrome pipe
 // Can be loaded from an http URL
@@ -15,12 +15,12 @@
   } else if (typeof exports === 'object') { // CommonJS
     definition(require, exports); 
   } else { // <script>
-    var getChromeExtensionPipe = function(){};
-    definition(undefined, getChromeExtensionPipe);
+    chromeExtensionPipe = {};  // global
+    definition(undefined, chromeExtensionPipe);
   }
-}(function (serverRequire, getChromeExtensionPipe) {
+}(function (serverRequire, chromeExtensionPipe) {
 
-getChromeExtensionPipe = function(iframeDomain){
+chromeExtensionPipe.createFrom = function(iframeDomain){
 
   var debug = false;
 
@@ -139,15 +139,15 @@ getChromeExtensionPipe = function(iframeDomain){
     addListener: proxyEnd.addListener.bind(proxyEnd),
     removeListener: proxyEnd.removeListener.bind(proxyEnd),
     detach: proxyEnd.detach.bind(proxyEnd),
-    NAME: getChromeExtensionPipe.NAME,
-    VERSION: getChromeExtensionPipe.VERSION
+    NAME: chromeExtensionPipe.NAME,
+    VERSION: chromeExtensionPipe.VERSION
   };
 };
 
-getChromeExtensionPipe.NAME = 'crx2app';
-getChromeExtensionPipe.VERSION = '1';
+chromeExtensionPipe.NAME = 'crx2app';
+chromeExtensionPipe.VERSION = '1';
 
-return getChromeExtensionPipe;
+return chromeExtensionPipe;
 
 }));
 
