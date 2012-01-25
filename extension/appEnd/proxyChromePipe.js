@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global window console */
+/*global window define exports require console */
 
 // Listens for postMessage events and forwards them as if this was the chrome pipe
 // Can be loaded from an http URL
@@ -9,7 +9,18 @@
 
 // @return: connection object with attach/detach addListener/postMessage
 
-function getChromeExtensionPipe(iframeDomain){
+(function (definition) {
+  if (typeof define === 'function') { // RequireJS
+    define(definition); 
+  } else if (typeof exports === 'object') { // CommonJS
+    definition(require, exports); 
+  } else { // <script>
+    var getChromeExtensionPipe = function(){};
+    definition(undefined, getChromeExtensionPipe);
+  }
+}(function (serverRequire, getChromeExtensionPipe) {
+
+getChromeExtensionPipe = function(iframeDomain){
 
   var debug = false;
 
@@ -131,8 +142,12 @@ function getChromeExtensionPipe(iframeDomain){
     NAME: getChromeExtensionPipe.NAME,
     VERSION: getChromeExtensionPipe.VERSION
   };
-}
+};
 
 getChromeExtensionPipe.NAME = 'crx2app';
 getChromeExtensionPipe.VERSION = '1';
+
+return getChromeExtensionPipe;
+
+}));
 

@@ -6,22 +6,7 @@
 <script src="../extension/lib/requirejs/require.js"></script>
 <script>
 
-/*globals getChromeExtensionPipe window console Q require */
-
-// We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
-
-var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
-
-var connection = getChromeExtensionPipe(iframeDomain);
-
-// dynamic iframe load
-//
-function loadPlugin(url) {
-  var iframe = document.createElement('iframe');
-  iframe.setAttribute('src', url);
-  var elt = document.getElementById('loadChromeIframe');
-  elt.appendChild(iframe);
-}
+/*globals window console Q require */
 
 var tests = {
   newTabCreated: Q.defer()
@@ -58,74 +43,63 @@ function failConnection(err) {
     console.err("Error "+err, err);
 }
 
-function onMessage(event) {
-
-  // Mock Orion (outer window) calls us
-  if (event.data === 'go') {
-  
-    // dynamically load the debugger code
-    require({
-      paths: {
-        "crx2app": "../extension",
-        "browser/remote": "extension/rpc"
-      }
-    }); 
-
-   require.onError = function(err) {
-     console.error(err+"", {stack: err.stack.split('\n')});
-   };
-
-   require(['DemoDebugger', 'crx2app/rpc/ChromeProxy'], function testIt(DemoDebugger, ChromeProxy) {
-   
-     // wrap the connection in rpc stuff for chrome.* api
-     var chromeProxy = ChromeProxy.new(connection, tester.eventHandlers);
-     
-     // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
-     // and attach to a new tab, enable debugging and update the page to the given URL.
-     var testURL = window.location.toString();
-     var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger);
-     
-     // when we are attached to the given page, test it.
-     Q.when(debuggerProxy, function(debuggerProxy) {
-       testConnection(debuggerProxy, chromeProxy);
-     }, failConnection).end();
-   });
+require({
+  paths: {
+    "crx2app": "../extension",
+    "browser/remote": "extension/rpc"
   }
-}
+}); 
 
-function attach(event) {
+require.onError = function(err) {
+  console.error(err+"", {stack: err.stack.split('\n')});
+};
 
-  // listen for a connection.
-  connection.attach(function onConnectedToChrome() {
+require(['crx2app/appEnd/connection'], function(connection) {
+
+  function onMessage(event) {
+
+    // Mock Orion (outer window) calls us
+    if (event.data === 'go') {
   
-    // we have connected to the extension, so plugin to Orion.
+      // dynamically load the debugger code
+
+     require(['DemoDebugger', 'crx2app/rpc/ChromeProxy'], 
+     function testIt(DemoDebugger,               ChromeProxy) {
+   
+       // wrap the connection in rpc stuff for chrome.* api
+       var chromeProxy = ChromeProxy.new(connection, tester.eventHandlers);
+     
+       // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
+       // and attach to a new tab, enable debugging and update the page to the given URL.
+       var testURL = window.location.toString();
+       var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger);
+     
+       // when we are attached to the given page, test it.
+       Q.when(debuggerProxy, function(debuggerProxy) {
+         testConnection(debuggerProxy, chromeProxy);
+       }, failConnection).end();
+     });
+    }
+  }
+
+   connection.attach(function onConnectedToChrome() {
+  
+       // we have connected to the extension, so plugin to Orion.
       
-    // listen for fake-Orion to tell us to do something
-    window.addEventListener('message', onMessage, false);
+       // listen for fake-Orion to tell us to do something
+       window.addEventListener('message', onMessage, false);
 
-    // The test driver just responds 'go' for our 'Ready' 
-    window.parent.postMessage("DemoDebugger", "*");
+       // The test driver just responds 'go' for our 'Ready' 
+       window.parent.postMessage("DemoDebugger", "*");
     
-    console.log("Plugin Ready "+window.location+" posted "+"DemoDebugger");
-  });
-  
-  // dynamically load the chromeIframe, it will connect and fire the callback
-  // (if we load the iframe statically, 
-  // this outer load event will come *after* the iframe load event.)
-  loadPlugin(iframeDomain + "/appEnd/chromeIframe.html");
-}
+      console.log("Plugin Ready "+window.location+" posted "+"DemoDebugger");
+     });
+});
 
-function onLoad() {
-  // clean up
-  window.removeEventListener('load', onLoad, false);
-  
-  // connect to the chromeIframe
-  attach();
-}
 
-// as soon as we load, setup the test
-//
-window.addEventListener('load', onLoad, false);
+
+
+
 
 function detach() {
   connection.detach();
@@ -137,7 +111,6 @@ window.addEventListener('unload', detach, false);
 </head>
 <body>
 <h1>DemoDebugger test plugin</h1>
-<div id="loadChromeIframe">
 </div>
 </body>
 </html>
