@@ -44,6 +44,7 @@ function adapterFactory(origin, debuggerTab) {
 
 
 function obeyOptions() {
+
   window.debugConnection = false;
   window.debugMessages = false;
   window.debugWarnings = false;
@@ -58,6 +59,8 @@ function obeyOptions() {
   window.debugMessages = options.debugMessages;
   window.debugWarnings = options.debugWarnings;
   window.debugAdapters = options.debugAdapters;
+  
+  options.allowedSites = options.allowedSites || [];
   
   options.allowedSites.forEach(function(allowedSite) {
     var name = 'Debug With ' + allowedSite.name;  
