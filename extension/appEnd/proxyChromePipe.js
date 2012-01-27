@@ -22,7 +22,7 @@
 
 chromeExtensionPipe.createFrom = function(iframeDomain){
 
-  var debug = false;
+  var debug = window.debugChromeDebuggerRemote || false;
 
   var proxyEnd = {
 
