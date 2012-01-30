@@ -14,6 +14,7 @@ define(['crx2app/appEnd/proxyChromePipe'], function(chromeExtensionPipe) {
   function loadPlugin(url) {
     var iframe = document.createElement('iframe');
     iframe.setAttribute('src', url);
+    iframe.classList.add("crx2appConnection");
     var elt = document.body;
     elt.appendChild(iframe);
   }
