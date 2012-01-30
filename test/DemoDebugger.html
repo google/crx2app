@@ -93,19 +93,13 @@ require(['crx2app/appEnd/connection'], function(connection) {
        window.parent.postMessage("DemoDebugger", "*");
     
       console.log("Plugin Ready "+window.location+" posted "+"DemoDebugger");
+      function detach() {
+        connection.detach();
+      }
+
+       window.addEventListener('unload', detach, false);
      });
 });
-
-
-
-
-
-
-function detach() {
-  connection.detach();
-}
-
-window.addEventListener('unload', detach, false);
 
 </script>
 </head>

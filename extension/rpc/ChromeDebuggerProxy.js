@@ -13,16 +13,17 @@ define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall
     // implement the remote commands as RPC over using chromeProxy
     initialize: function(chromeProxy, debuggee) {
       this._debuggee = debuggee; // see http://code.google.com/chrome/extensions/debugger.html
+      this.chromeProxy = chromeProxy;
              // We prefix the argument list with our 'debuggee' object containing the tabId
-      this.build2LevelPromisingCalls(remote, this, chromeProxy, this._debuggee);
+      this.build2LevelPromisingCalls(remote, this, this.chromeProxy, this._debuggee);
     },
 
-    registerHandlers: function(chromeProxy, eventHandlers) {
-      chromeProxy.build2LevelEventHandlers(remote, eventHandlers);
+    registerHandlers: function(eventHandlers) {
+      this.chromeProxy.build2LevelEventHandlers(remote, eventHandlers);
     },
     
-    _detach: function(chromeProxy) {
-      JSONMarshall._detach.apply(this, [chromeProxy.getConnection()]);
+    _detach: function() {
+      JSONMarshall._detach.apply(this, [this.chromeProxy.getConnection()]);
     }
   
   });

@@ -62,7 +62,7 @@ function(              MetaObject,                 Q,               JSONMarshall
         var tabId = win.tabs[0].id;
       
         var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId});
-        debuggerProxy.registerHandlers(this, debuggerEventHandlers);
+        debuggerProxy.registerHandlers(debuggerEventHandlers);
         
         this.debugger.attach({tabId: tabId}, "0.1", function() {
           if (this.debug) {

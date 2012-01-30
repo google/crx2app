@@ -25,7 +25,7 @@ define(  ['crx2app/rpc/ChromeDebuggerProxy'],
         scriptFailedToParse: function(data, errorLine, errorMessage, firstLine, url) {
           output("DemoDebugger", arguments);
         },
-        scriptParsed: function(endColumn, endLine, isContentScript, scriptId, startColumn, startLine, url, p_id) {
+        scriptParsed: function(scriptId, url, startLine, startColumn, endLine, endColumn, isContentScript, sourceMapURL, p_id) {
           output('scriptParsed '+url);
         }
       }
@@ -33,7 +33,7 @@ define(  ['crx2app/rpc/ChromeDebuggerProxy'],
 
     initialize: function(chromeProxy, debuggee) {
       ChromeDebuggerProxy.initialize.apply(this, [chromeProxy, debuggee]);
-      this.registerHandlers(chromeProxy, this.Debugger.events);
+      this.registerHandlers(this.Debugger.events);
     }
   
   });
