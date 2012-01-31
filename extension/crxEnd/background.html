@@ -81,7 +81,7 @@ function obeyOptions() {
           if (!windowsAdapter) {  // then this origin has not been seen
              windowsAdapter = crxEnd.createWindowsAdapter(validOrigin, debuggerTab);
           }
-          windowsAdapter.addTab(debuggeeTabId);
+          windowsAdapter.addUserSelectedTab(debuggeeTabId);
     
           var url = allowedSite.site + '?tabId=' + debuggeeTabId + '&';
           // now release the debugger

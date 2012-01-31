@@ -26,7 +26,10 @@ function WindowsAdapter(origin, debuggerTab) {
   this.chromeTabIds = [];     // only these tabs can be used by client
 
   // chrome.debugger calls must complete before any other chrome.* calls
-  this.chromeQueue = []; 
+  this.chromeQueue = [];
+  
+  // All user selected tabs are accessible to this debugger
+  WindowsAdapter.userSelectedTabs.forEach(this.addTab.bind(this));
     
   this._bindListeners();
   // chrome.window functions available to client WebApps
@@ -36,6 +39,7 @@ function WindowsAdapter(origin, debuggerTab) {
 
 WindowsAdapter.path = 'chrome.windows';
 WindowsAdapter.instanceCounter = 0;
+WindowsAdapter.userSelectedTabs = [];
 
 WindowsAdapter.prototype = {
   
@@ -52,6 +56,9 @@ WindowsAdapter.prototype = {
   },
 
   //------------------------------------------------------------------------------------ 
+  addUserSelectedTab: function(tabId) {
+    WindowsAdapter.userSelectedTabs.push(tabId);
+  },
 
   isAccessibleTab: function(tabId) {
     return (this.chromeTabIds.indexOf(tabId) > -1);
@@ -62,6 +69,11 @@ WindowsAdapter.prototype = {
   },
   
   removeTab: function(tabId) {
+    var userIndex = WindowsAdapter.userSelectedTabs.indexOf(tabId);
+    if (userIndex > -1) {
+      WindowsAdapter.userSelectedTabs.splice(userIndex, 1);
+    } // else not user selected
+    
     var index = this.chromeTabIds.indexOf(tabId);
     if (index > -1) {
       this.chromeTabIds.splice(index, 1);

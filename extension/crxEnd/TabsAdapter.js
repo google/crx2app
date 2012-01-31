@@ -93,7 +93,7 @@ TabsAdapter.prototype = {
   
   onRemoved: function(tabId, removeInfo) {
     this.barrier(tabId, arguments, function(tabId, removeInfo, index) {
-      this.windowsAdapter.removeTab(index);
+      this.windowsAdapter.removeTab(tabId);
       this.postMessage({source: this.getPath(), method: 'onRemoved', params:{tabId: tabId, removeInfo: removeInfo}});
     });
   },
