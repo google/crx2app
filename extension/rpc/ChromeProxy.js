@@ -46,6 +46,29 @@ function(              MetaObject,                 Q,               JSONMarshall
       return deferred.promise;
     },
     
+    openDebuggerProxyOnTab: function (tabId, debuggerEventHandlers) {
+      var deferred = Q.defer();
+      var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId});
+      debuggerProxy.registerHandlers(debuggerEventHandlers);
+        
+      this.debugger.attach({tabId: tabId}, "0.1", function() {
+        if (this.debug) {
+          console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
+        }
+
+        var enabled = debuggerProxy.Debugger.enable();
+        enabled.then(function () {
+          if (this.debug) {
+                console.log("ChromeProxy openDebuggerProxy enabled", enabled);
+          }
+          deferred.resolve(debuggerProxy);
+        });
+        
+      });
+
+      return deferred.promise;
+    },
+    
     /*
      * create debugger for url in a new Chrome window 
      * @param url, string URL
@@ -55,34 +78,24 @@ function(              MetaObject,                 Q,               JSONMarshall
     openDebuggerProxy: function(url, debuggerEventHandlers) {
       var deferred = Q.defer();
       var win = this.promiseNewWindow();
-      Q.when(win, function(win) {
-        if (this.debug) {
-          console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
-        }
-        var tabId = win.tabs[0].id;
-      
-        var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId});
-        debuggerProxy.registerHandlers(debuggerEventHandlers);
-        
-        this.debugger.attach({tabId: tabId}, "0.1", function() {
+      win.then(
+        function(win) {
           if (this.debug) {
-            console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
+            console.log("ChromeProxy openDebuggerProxy onCreated callback, trying connect", win);
           }
-
-          var enabled = debuggerProxy.Debugger.enable();
-    
-          Q.when(enabled, function(enabled) {
-            if (this.debug) {
-              console.log("ChromeProxy openDebuggerProxy enabled", enabled);
-            }
-
-            this.tabs.update(tabId, {url: url}, function(tab) {
-              return deferred.resolve(debuggerProxy);
-            });
-          }.bind(this)).end();
+          var tabId = win.tabs[0].id;
+      
+          var debuggerProxy = this.openDebuggerProxyOnTab(tabId, debuggerEventHandlers);
+          debuggerProxy.then(
+            function(debuggerProxy) {
+              this.tabs.update(tabId, {url: url}, function(tab) {
+                return deferred.resolve(debuggerProxy);
+              });
+            }.bind(this)
+          ).end();
+          
         }.bind(this));
       
-      }.bind(this));
       return deferred.promise;
     }
   });
