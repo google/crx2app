@@ -46,17 +46,28 @@ function(              MetaObject,                 Q,               JSONMarshall
       return deferred.promise;
     },
     
-    openDebuggerProxyOnTab: function (tabId, debuggerEventHandlers) {
+    onPreAttach: function(debuggerEventHandlers, debuggerProxy) {
+      debuggerProxy.registerHandlers(debuggerEventHandlers);
+    },
+    
+    onPostAttach: function(debuggerProxy) {
+       return debuggerProxy.Debugger.enable();
+    },
+    
+    openDebuggerProxyOnTab: function (tabId, onPreAttach, onPostAttach) {
       var deferred = Q.defer();
       var debuggerProxy = ChromeDebuggerProxy.new(this, {tabId: tabId});
-      debuggerProxy.registerHandlers(debuggerEventHandlers);
+      
+      onPreAttach = onPreAttach || this.onPreAttach;
+      onPreAttach(debuggerProxy);
         
       this.debugger.attach({tabId: tabId}, "0.1", function() {
         if (this.debug) {
           console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
         }
 
-        var enabled = debuggerProxy.Debugger.enable();
+        onPostAttach = onPostAttach || this.onPostAttach;
+        var enabled = onPostAttach(debuggerProxy);
         enabled.then(function () {
           if (this.debug) {
                 console.log("ChromeProxy openDebuggerProxy enabled", enabled);
@@ -85,7 +96,8 @@ function(              MetaObject,                 Q,               JSONMarshall
           }
           var tabId = win.tabs[0].id;
       
-          var debuggerProxy = this.openDebuggerProxyOnTab(tabId, debuggerEventHandlers);
+          
+          var debuggerProxy = this.openDebuggerProxyOnTab(tabId, this.onPreAttach.bind(this, debuggerEventHandlers));
           debuggerProxy.then(
             function(debuggerProxy) {
               this.tabs.update(tabId, {url: url}, function(tab) {
