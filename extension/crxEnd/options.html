@@ -207,6 +207,13 @@ body {
 .stateSaved .remove {
   display: inline
 }
+
+.hidden {
+  display: none;
+}
+#warnReload {
+  color: red;
+}
 </style>
 </head>
 <body>
@@ -260,6 +267,10 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
   <input type='checkbox' id="debugMessages" onclick='onClickDebug(event)' />Trace messages<br />
   <input type='checkbox' id="debugWarnings" onclick='onClickDebug(event)' />Trace Warning IO<br />
   <input type='checkbox' id="debugAdapters" onclick='onClickDebug(event)' />Trace chrome.* adapters<br />
+</div>
+<br />
+<div>
+<span id='warnReload' class='hidden warning'>To Complete Options Update, Please click <code>reload</code> the chrome://extensions page</span>
 </div>
 </body>
 </html>

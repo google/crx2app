@@ -35,6 +35,9 @@ function saveOptions() {
 
   var stringified = JSON.stringify(options);
   window.localStorage.setItem('options', stringified);
+  
+  var warnReload = document.getElementById('warnReload');
+  warnReload.classList.remove('hidden');  
 }
 
 function restoreOptions() {
