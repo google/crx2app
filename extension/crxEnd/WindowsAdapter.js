@@ -1,7 +1,7 @@
 // Google BSD license http://code.google.com/google_bsd_license.html
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
-/*global console window*/
+/*global console window debugConnection debugAdapters debugMessages*/
 
 /*
  Barrier proxy for chrome.windows. One per Debugger domain.
@@ -65,7 +65,12 @@ WindowsAdapter.prototype = {
   },
     
   addTab: function(tabId) {
-    this.chromeTabIds.push(tabId);
+    if (!this.isAccessibleTab(tabId)) {
+      this.chromeTabIds.push(tabId);
+      if (debugAdapters) {
+        console.log("windowsAdapter allows "+tabId);
+      }
+    }
   },
   
   removeTab: function(tabId) {
@@ -177,11 +182,17 @@ WindowsAdapter.prototype = {
 
   //---------------------------------------------------------------------------------------------------------
   _connect: function() {
-    if (debugConnection) console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
+    if (debugConnection) {
+      console.log("WindowsAdapter "+this.name+" connect "+this.debuggerOrigin);
+    }
   },
   
   _disconnect: function() {
-    if (debugConnection) console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin);
+    if (debugConnection) {
+      var adapters = this.tabAdapter ? "tabAdapter" : "";
+      adapters += this.debugAdapter ? " debugAdapter": "";
+      console.log("WindowsAdapter "+this.name+" disconnect "+this.debuggerOrigin+" has adapters "+adapters);
+    }
     
     if (this.tabAdapter) {
       this.tabAdapter.disconnect();
