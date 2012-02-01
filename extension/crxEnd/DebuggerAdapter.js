@@ -130,10 +130,12 @@ DebuggerAdapter.prototype = {
       
       if (DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]) {  // then we reloaded the debugger
         window.clearTimeout(DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]);
-        if (this.debuggeeTabIds.indexOf(debuggee.tabId) === -1) {
-          console.error("crxEnd.DebuggerAdapter.onAttach cleared the cleanup of "+debuggee.tabId+" but it was not a known tab");
+        if (debug) {
+          var index = this.debuggeeTabIds.indexOf(debuggee.tabId);
+          console.info("crxEnd.DebuggerAdapter.onAttach cleared the cleanup of "+debuggee.tabId+" index: "+index);
         }
-      } else {
+      }
+      if (this.debuggeeTabIds.indexOf(debuggee.tabId) === -1) {
         this.debuggeeTabIds.push(debuggee.tabId);
       }
       
