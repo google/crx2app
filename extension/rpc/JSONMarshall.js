@@ -218,7 +218,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   // objectKey: name, eg chrome.debugger, chrome.windows,...
   // impl: defn for some of the iface entries becomes |this| for handlers
   // eventHandlers: {Debugger: {functions}, Console: {functions}}
-  JSONMarshall.buildEventHandlers = function(iface, objectKey, impl) {
+  JSONMarshall.buildEventHandlers = function(iface, objectKey, impl, self) {
     this.jsonHandlers = this.jsonHandlers || {};
     this.jsonHandlers[objectKey] = this.jsonHandlers[objectKey] || {};
     var object = this.jsonHandlers[objectKey];
@@ -228,7 +228,7 @@ define(['crx2app/lib/q/q'], function (Q) {
       var handler = impl[handlerName];  // implementation function of
       if (handler) {
         this.addHandlerParameters(handler, handlerSpec);
-        object[handlerName] = marshallForHandler(impl, handler);
+        object[handlerName] = marshallForHandler(self, handler);
       }
     }.bind(this));
   };
@@ -236,7 +236,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   JSONMarshall.build2LevelEventHandlers = function(iface, impl) {
     var flatFace = this.flattenDomains(iface, 'events');  // eg "Debugger.globalObjectCleared"
     var flatImpl = this.flattenDomains(impl, 'events');
-    this.buildEventHandlers(flatFace, 'chrome.debugger.remote', flatImpl);
+    this.buildEventHandlers(flatFace, 'chrome.debugger.remote', flatImpl, impl);
   };
   
   // Walk the API and implement each function to send over channel.
