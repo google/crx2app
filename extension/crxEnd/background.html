@@ -18,15 +18,11 @@
 <!-- for the constants -->
 <script src="../appEnd/appEnd.js"></script>
 <script>
+/*globals window restoreOptions buildContextMenuItem */
+
 function define(deps, defn) {
   window.remote = defn();
 }
-</script>
-<script src="../rpc/remote.js"></script>
-<script>
-/*globals window restoreOptions buildContextMenuItem */
-
-
 
 var  WindowsAdapter = makeWindowsAdapter(chrome, PostSource);
 var  TabsAdapter = makeTabsAdapter(chrome, PostSource);
