@@ -39,7 +39,7 @@ function PostSource(path) {
     
     noErrorPosted: function(jsonObj) {
       if (chrome.extension.lastError) {
-        this.postError(chrome.extension.lastError, jsonObj);
+        this.postError(chrome.extension.lastError.message, jsonObj);
         return false;
       }
       return true;
