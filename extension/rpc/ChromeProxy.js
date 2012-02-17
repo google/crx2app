@@ -60,8 +60,8 @@ function(              MetaObject,                 Q,               JSONMarshall
       
       onPreAttach = onPreAttach || this.onPreAttach;
       onPreAttach(debuggerProxy);
-        
-      this.debugger.attach({tabId: tabId}, "0.1", function() {
+       
+      function onAttach() {
         if (this.debug) {
           console.log("ChromeProxy openDebuggerProxy connected, send enable: "+tabId);
         }
@@ -74,10 +74,13 @@ function(              MetaObject,                 Q,               JSONMarshall
           }
           deferred.resolve(debuggerProxy);
         });
-        
-      }.bind(this), function(err) {
-        deferred.reject(err);
-      });
+      }
+
+      function onRetry() {
+        this.debugger.attach({tabId: tabId}, "1.0", onAttach.bind(this));
+      }
+      
+      this.debugger.attach({tabId: tabId}, "0.1", onAttach.bind(this), onRetry.bind(this));
 
       return deferred.promise;
     },
