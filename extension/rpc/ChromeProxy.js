@@ -75,7 +75,9 @@ function(              MetaObject,                 Q,               JSONMarshall
           deferred.resolve(debuggerProxy);
         });
         
-      }.bind(this));
+      }.bind(this), function(err) {
+        deferred.reject(err);
+      });
 
       return deferred.promise;
     },
