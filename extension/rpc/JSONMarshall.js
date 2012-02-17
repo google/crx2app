@@ -61,21 +61,30 @@ define(['crx2app/lib/q/q'], function (Q) {
       if (typeof args[args.length - 1] === 'function') {
         // remove the callback, otherwise we get a DOM error on serialization
         var callback = args.pop();
-        // once we get an answer, send it to the callback
-        Q.when(deferred.promise, function(result){
-          if (debug) {
-            console.log(method+" callback now "+result);
-          }
-          callback(result);
-        }, function() {
-          var errMsg = arguments[0];
+        
+        function defaultErrorBack(errMsg) {
           if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.args && errMsg.args.length ) {
             console.error("Error "+errMsg.args[0], errMsg.args[1]);
           } else {
-            console.error("JSONMarshall sendCommand ERROR ", arguments);
+            var message = errMsg.message || "";
+            console.error("JSONMarshall sendCommand ERROR "+message, arguments);
           }
-        }).end();
-      }
+        }
+        
+        // check for errback
+        var errback = defaultErrorBack;
+        if ( (args.length >= 1) && (typeof args[args.length - 1] === 'function')) { 
+          errback = callback;
+          callback = args.pop();
+        }  
+          // once we get an answer, send it to the callback
+          Q.when(deferred.promise, function(result){
+            if (debug) {
+              console.log(method+" callback now "+result);
+            }
+            callback(result);
+          }, errback).end();
+        }
       
       var message = {target: target, method: method,  params: args, serial: serial, debuggee: debuggee};
       
@@ -165,8 +174,10 @@ define(['crx2app/lib/q/q'], function (Q) {
         } else {
           if (data.method && data.method === 'onError') {
             deferred.reject({
+              message: data.params[0]+'',
+              data: data,
               toString: function() {
-                return data.params[0];
+                return data.params[0]+"";
               },
               request: data.params[1]
             });
