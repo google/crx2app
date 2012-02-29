@@ -46,8 +46,6 @@ DebuggerAdapter.prototype = {
         return;
       }
     
-      this.addListeners();
-      
       // Setup the connection to the devtools backend
       chrome.debugger.attach(debuggee, version, this.onAttach.bind(this, serial, debuggee));
     },
@@ -127,7 +125,9 @@ DebuggerAdapter.prototype = {
       if (debug) {
         console.log(serial+":  crx2app.DebuggerAdapter.onAttach: "+debuggee.tabId);
       }
-      
+
+      this.addListeners();
+
       if (DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]) {  // then we reloaded the debugger
         window.clearTimeout(DebuggerAdapter.cleanUpDebuggees[debuggee.tabId]);
         if (debug) {
