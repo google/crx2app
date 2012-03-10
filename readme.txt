@@ -4,7 +4,7 @@ crx2app A Barrier Proxy giving Web app limited access to Chrome Browser extensio
 // Copyright 2011 Google Inc. johnjbarton@google.com
 
 Install
-  Use Chrome Browser version 18 or larger (dev channel as of Jan 2012)
+  Use Chrome Browser version 19 or larger (dev channel as of Jan 2012)
   
   Clone this reprository
   
