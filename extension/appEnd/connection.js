@@ -5,9 +5,7 @@
 
 define(['crx2app/appEnd/proxyChromePipe'], function(chromeExtensionPipe) {
 
-  var iframeDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
-
-  var connection = chromeExtensionPipe.createFrom(iframeDomain);
+  var connection = chromeExtensionPipe.createFrom(window.crx2appBase);
 
   // dynamic iframe load
   //
@@ -27,7 +25,7 @@ define(['crx2app/appEnd/proxyChromePipe'], function(chromeExtensionPipe) {
     // dynamically load the chromeIframe, it will connect and fire the callback
     // (if we load the iframe statically, 
     // this outer load event will come *after* the iframe load event.)
-    loadPlugin(iframeDomain + "/appEnd/chromeIframe.html");
+    loadPlugin(window.crx2appBase + "/appEnd/chromeIframe.html");
   };
   
   return connection; 

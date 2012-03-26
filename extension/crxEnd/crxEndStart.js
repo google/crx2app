@@ -1,7 +1,11 @@
 /*globals window restoreOptions buildContextMenuItem */
 
-function define(deps, defn) {
-  window.remote = defn();
+if (!window.define) {
+
+  window.define = function(deps, defn) {
+    window.remote = defn();
+  };
+ 
 }
 
 var  WindowsAdapter = makeWindowsAdapter(chrome, PostSource);
@@ -43,8 +47,8 @@ function obeyOptions() {
     if (name && name !== '(none)') {
       // open blank and update to avoid racing debugger attaching to the tab   
       //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
-      var extensionDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
-      var fakeBlankURL = extensionDomain+"/workaroundBug108519.html";
+      var crx2appBase = window.crx2appBase; 
+      var fakeBlankURL = crx2appBase + '/workaroundBug108519.html';
       //**********
       buildContextMenuItem(name, fakeBlankURL, function onDebuggerWindowCreated(debuggeeTabId, win) {
         var debuggerTab = win.tabs[0];

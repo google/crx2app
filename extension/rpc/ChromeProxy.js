@@ -37,8 +37,7 @@ function(              MetaObject,                 Q,               JSONMarshall
     promiseNewWindow: function() {
       var deferred = Q.defer();      
       //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
-      var extensionDomain = "chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
-      var fakeBlankURL = extensionDomain+"/workaroundBug108519.html";
+      var fakeBlankURL = window.crx2appBase+"/workaroundBug108519.html";
       //**********
       this.windows.create({url: fakeBlankURL},  function onCreated(win) {
         deferred.resolve(win);

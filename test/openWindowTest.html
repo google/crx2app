@@ -10,9 +10,9 @@
 
 // We are a plugin in Orion, we have an internal chromeIframe talking to chrome.
 
-var iframeDomain ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
+window.crx2appBase ="chrome-extension://bbjpappmojnmallpnfgfkjmjnhhplgog";
 
-var connection = getChromeExtensionPipe(iframeDomain);
+var connection = getChromeExtensionPipe(window.crx2appBase);
 
 function detach() {
   connection.detach();
@@ -46,7 +46,7 @@ function attach(event) {
   // dynamically load the chromeIframe, it will connect and fire the callback
   // (if we load the iframe statically, 
   // this outer load event will come *after* the iframe load event.)
-  loadPlugin(iframeDomain + "/appEnd/chromeIframe.html");
+  loadPlugin(window.crx2appBase + "/appEnd/chromeIframe.html");
 }
 
 // Fire the test code.
