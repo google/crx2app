@@ -11,18 +11,20 @@
 
 (function (definition) {
   if (typeof define === 'function') { // RequireJS
-    define(definition); 
-  } else if (typeof exports === 'object') { // CommonJS
-    definition(require, exports); 
+    define(['require'], definition); 
   } else { // <script>
     chromeExtensionPipe = {};  // global
-    definition(undefined, chromeExtensionPipe);
+    definition(undefined);
   }
-}(function (serverRequire, chromeExtensionPipe) {
+}(function (serverRequire) {
 
-chromeExtensionPipe.createFrom = function(iframeDomain){
+var chromeExtensionPipe = {};  
+
+chromeExtensionPipe.createFrom = function(crx2appBase){
 
   var debug = window.debugChromeDebuggerRemote || false;
+  
+  var iframeDomain = crx2appBase.split('/').slice(0,3).join('/');
 
   var proxyEnd = {
 
