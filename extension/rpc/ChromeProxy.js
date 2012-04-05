@@ -1,7 +1,7 @@
 // See Purple/license.txt for Google BSD license
 // Copyright 2011 Google, Inc. johnjbarton@johnjbarton.com
 
-/*global define console */
+/*global define console window */
 define(  ['crx2app/lib/MetaObject', 'crx2app/lib/q/q', 'crx2app/rpc/JSONMarshall', 'crx2app/rpc/chrome',  'crx2app/rpc/ChromeDebuggerProxy'],
 function(              MetaObject,                 Q,               JSONMarshall,               chrome,                ChromeDebuggerProxy) {
 
@@ -33,7 +33,13 @@ function(              MetaObject,                 Q,               JSONMarshall
       JSONMarshall.detach.apply(this, [this.getConnection()]);
     },
   
-  
+    openNewWindow: function(onCreated) {
+      //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
+      var fakeBlankURL = window.crx2appBase+"/workaroundBug108519.html";
+      //**********
+      this.windows.create({url: fakeBlankURL},  onCreated);
+    },
+    
     promiseNewWindow: function() {
       var deferred = Q.defer();      
       //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
