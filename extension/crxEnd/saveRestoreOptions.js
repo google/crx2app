@@ -7,7 +7,10 @@
 // options.allowedSites is array of {site: url, name: string}
 
 function saveOptions() {
-  var options = {allowedSites: []};
+  var options = {
+      allowedSites: [],
+      extensionInfos: []
+  };
   var allowedSitesTable = document.getElementById('origins');
   var originElts = allowedSitesTable.getElementsByClassName('origin');
   for(var i = 0; i < originElts.length; i++) {
@@ -19,6 +22,22 @@ function saveOptions() {
       var name = contextMenuNameElt.value || '(none)';
       options.allowedSites.push({site: origin, name: name});
     }
+  }
+
+  
+  var extensionInfosRows = document.querySelectorAll('.extensionInfos-row');
+  for (var i = 0; i < extensionInfosRows.length; i++) {
+      if (extensionInfosRows[i].classList.contains('extensionInfo-template')) {
+	  continue;
+      }
+      var name = extensionInfosRows[i].querySelector('.extensionInfo-name').value;
+      var startPage =  extensionInfosRows[i].querySelector('.extensionInfo-startPage').value;
+      options.extensionInfos.push(
+        {
+	    name: name,
+	    startPage: startPage
+	 }
+      );
   }
   
   var debugConnection = document.getElementById('debugConnection');

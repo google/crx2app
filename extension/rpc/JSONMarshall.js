@@ -3,7 +3,7 @@
 
 /*globals define console*/
 
-define(['crx2app/lib/q/q'], function (Q) {
+define(['crx2app/rpc/Cause'], function (Cause) {
   
   var debug = false;
   
@@ -43,33 +43,29 @@ define(['crx2app/lib/q/q'], function (Q) {
  
   // global monotonic 
   var serialCounter = 1; // every serial must be truthy
-  // promises made and not kept by serial
-  var deferredBySerial = {};
+  var callbacksBySerial = {};
+
+  function defaultErrorBack(errMsg) {
+    if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.args && errMsg.args.length ) {
+      console.error("Error "+errMsg.args[0], errMsg.args[1]);
+    } else {
+      var message = errMsg.message || "";
+      console.error("JSONMarshall sendCommand ERROR "+message, arguments);
+    }
+  }
 
   function makeSendCommand(channel, target, method, debuggee) {
-    // we close over the argumentes
+    // we close over the arguments
     return function sendCommand() {  // arguments here will depend upon method
       var args = Array.prototype.slice.apply(arguments, [0]);
       
       // Our sequence number for RPC
       var serial =  serialCounter++;
       
-      // store the deferred for recvResponseData
-      var deferred = deferredBySerial[serial] = Q.defer();
-      
       // Check for a callback function
       if (typeof args[args.length - 1] === 'function') {
         // remove the callback, otherwise we get a DOM error on serialization
         var callback = args.pop();
-        
-        function defaultErrorBack(errMsg) {
-          if (errMsg && errMsg.method && (errMsg.method === 'onError') && errMsg.args && errMsg.args.length ) {
-            console.error("Error "+errMsg.args[0], errMsg.args[1]);
-          } else {
-            var message = errMsg.message || "";
-            console.error("JSONMarshall sendCommand ERROR "+message, arguments);
-          }
-        }
         
         // check for errback
         var errback = defaultErrorBack;
@@ -77,20 +73,21 @@ define(['crx2app/lib/q/q'], function (Q) {
           errback = callback;
           callback = args.pop();
         }  
-          // once we get an answer, send it to the callback
-          Q.when(deferred.promise, function(result){
-            if (debug) {
-              console.log(method+" callback now "+result);
-            }
-            callback(result);
-          }, errback).end();
-        }
+    
+        // store the callbacks for recvResponseData
+        callbacksBySerial[serial] = {
+          callback: callback,
+          errback: errback,
+          cause: new Cause()
+        };
+        
+      } else {
+        throw new Error('Callback function argument missing');
+      }
       
       var message = {target: target, method: method,  params: args, serial: serial, debuggee: debuggee};
       
       channel.postMessage(message);
-      // callers can wait on the promise to be resolved by recvResponseData
-      return deferred.promise; 
     };
   }
   
@@ -166,14 +163,14 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   JSONMarshall.recvResponseData = function(data) {
     var serial = data.serial; // set by sendCommand
-    var deferred = deferredBySerial[serial];
-    if (deferred) {
+    var callbacks = callbacksBySerial[serial];
+    if (callbacks) {
       try {
         if (data.method && (data.method !== 'onError') ) {
-          deferred.resolve(data.params[0]);
+          callbacks.callback(data.params[0]);
         } else {
           if (data.method && data.method === 'onError') {
-            deferred.reject({
+            callbacks.errback({
               message: data.params[0]+'',
               data: data,
               toString: function() {
@@ -182,14 +179,18 @@ define(['crx2app/lib/q/q'], function (Q) {
               request: data.params[1]
             });
           } else {
-            deferred.reject(data);
+            callbacks.errback({message:"Unknown method", data: data});
           }
+        }
+      } catch(exc) {
+        if (debug) {
+          console.error('recv %o fail: ' + exc + '\n', data, callbacks.cause.stack);
         }
       } finally {
         if (debug) {
           console.log("recvResponseData completed "+serial, data);
         }
-        delete deferredBySerial[serial];
+        delete callbacksBySerial[serial];
       }
     } // else another remote may have created the request
   };
@@ -262,7 +263,7 @@ define(['crx2app/lib/q/q'], function (Q) {
   
   
   // chrome.debugger remote methods have domain.method names
-  JSONMarshall.build2LevelPromisingCalls = function(iface, impl, chromeProxy, debuggee) {
+  JSONMarshall.build2LevelCommands = function(iface, impl, chromeProxy, debuggee) {
 
     var domains = Object.keys(iface);
     

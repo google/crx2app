@@ -64,21 +64,15 @@ DebuggerAdapter.prototype = {
       this.blockers++;
       
       var commandResponse = function(response) {
-        if (chrome.extension.lastError) {
+        if (!chrome.extension.lastError) {
+          if (debug) {
+            console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, response);
+          }
+        } else {
           console.error("sendCommand "+method+" FAILS "+chrome.extension.lastError, chrome.extension.lastError);
-          return;
+          response = {error: chrome.extension.lastError};
         }
-        if (debug) {
-          console.log(serial+" crxEnd/DebuggerAdapter.commandResponse "+method, response);
-        }
-        if (method === "Debugger.getScriptSource") {
-          response = {id: response.id, result: response, error: response.error}; // http://code.google.com/p/chromium/issues/detail?id=110396
-        } else if (method === "CSS.getSupportedCSSProperties") {
-          response = {id: response.id, result: response, error: response.error};
-        } else if (!response.result ) {
-          response = {id: response.id, result: response, error: response.error};
-        }
-        
+
         this.onResponse(serial, {method: method, params:params}, response);
         this.blockers--;
         if (!this.blockers) {

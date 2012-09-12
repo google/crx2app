@@ -33,7 +33,7 @@ define(  ['crx2app/rpc/ChromeDebuggerProxy'],
 
     initialize: function(chromeProxy, debuggee) {
       ChromeDebuggerProxy.initialize.apply(this, [chromeProxy, debuggee]);
-      this.registerHandlers(this.Debugger.events);
+      ChromeDebuggerProxy.Debugger.addListener(this.Debugger.events);
     }
   
   });

@@ -32,7 +32,7 @@ function buildContextMenuItem(title, url, onDebuggerWindowCreated) {
           createData.left = insureNumber(left) || (window.screen.availLeft + (window.screen.availWidth - createData.width) );
 
           // Open Purple in a new window.
-          chrome.windows.create(createData, onDebuggerWindowCreated.bind(null, tab.id));
+          chrome.windows.create(createData, onDebuggerWindowCreated.bind(null, info, tab));
         };
       }
 

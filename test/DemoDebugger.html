@@ -65,22 +65,25 @@ require(['crx2app/appEnd/connection'], function(connection) {
   
       // dynamically load the debugger code
 
-     require(['DemoDebugger', 'crx2app/rpc/ChromeProxy'], 
-     function testIt(DemoDebugger,               ChromeProxy) {
+      require(['DemoDebugger', 'crx2app/rpc/ChromeProxy'], 
+        function testIt(DemoDebugger,         ChromeProxy) {
    
-       // wrap the connection in rpc stuff for chrome.* api
-       var chromeProxy = ChromeProxy.new(connection, tester.eventHandlers);
+          // wrap the connection in rpc stuff for chrome.* api
+          var chromeProxy = ChromeProxy.new(connection, tester.eventHandlers);
      
-       // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
-       // and attach to a new tab, enable debugging and update the page to the given URL.
-       var testURL = window.location.toString();
-       var debuggerProxy = chromeProxy.openDebuggerProxy(testURL, DemoDebugger);
-     
-       // when we are attached to the given page, test it.
-       Q.when(debuggerProxy, function(debuggerProxy) {
-         testConnection(debuggerProxy, chromeProxy);
-       }, failConnection).end();
-     });
+          // wrap the connection in more rpc stuff for remote debug protocol through chrome.debugger,
+          // and attach to a new tab, enable debugging and update the page to the given URL.
+          var testURL = window.location.toString();
+          chromeProxy.openDebuggerProxy(
+            testURL, 
+            DemoDebugger,
+            function(debuggerProxy) { // when we are attached to the given page, test it.
+              testConnection(debuggerProxy, chromeProxy);
+            }, 
+            failConnection 
+          );
+        }
+      );
     }
   }
 
@@ -95,18 +98,19 @@ require(['crx2app/appEnd/connection'], function(connection) {
        window.parent.postMessage("DemoDebugger", "*");
     
       console.log("Plugin Ready "+window.location+" posted "+"DemoDebugger");
-      function detach() {
-        connection.detach();
-      }
-
-       window.addEventListener('unload', detach, false);
      });
+
+  function detach() {
+    connection.detach();
+  }
+
+  window.addEventListener('unload', detach, false);
+     
 });
 
 </script>
 </head>
 <body>
 <h1>DemoDebugger test plugin</h1>
-</div>
 </body>
 </html>

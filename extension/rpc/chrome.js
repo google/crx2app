@@ -67,7 +67,7 @@ define([], function () {
     api: {
       attach: function(tabId, requiredVersion, callback) {},
       detach: function(tabId, callback) {},
-      // Rather than using this method, use rpc/remote and JSONMarshal.build2LevelPromisingCalls
+      // Rather than using this method, use rpc/remote and JSONMarshal.build2LevelCommands
       sendCommand: function(debuggee, method, params, callback) {}
     },
     events: {

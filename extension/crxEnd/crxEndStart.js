@@ -22,6 +22,56 @@ function adapterFactory(origin, debuggerTab) {
   return adapters;
 }
 
+// return an extended chrome.contextMenu onClick handler closed over a 'site'
+// callback(debuggerTab, debuggeeTab) 
+//
+function allowSiteWhenDebuggerOpens(site, callback, extraURLParams) {
+  return function onDebuggerWindowCreated(onClickInfo, debuggeeTab, win) {
+    var debuggerTab = win.tabs[0];
+
+    // We just created a window for the debugger. 
+    // We gave it a tabId via the URL parameters, it will now try to attach to that tabId
+    // We need to allow it by finding the right instance of windowsAdapter and calling addTab.
+
+    crxEnd.checkDebuggerOrigin(
+      site, 
+      function onValidOrigin(validOrigin) {
+        WindowsAdapter.addUserSelectedTab(debuggeeTab.id);
+
+        var windowsAdapter = crxEnd.getWindowsAdaptersByOrigin(validOrigin, debuggerTab);
+        if (!windowsAdapter) {  // then this origin has not been seen
+           windowsAdapter = crxEnd.createWindowsAdapter(validOrigin, debuggerTab);
+        } else {
+           windowsAdapter.addTab(debuggerTab);
+        }
+
+        var url = site + '?tabId=' + debuggeeTab.id + '&' + 'url=' + encodeURIComponent(onClickInfo.pageUrl);
+        if (extraURLParams) 
+          url += extraURLParams;
+
+        // now release the debugger
+        var onUpdate = callback ? callback.bind(null, debuggeeTab) : null;
+        chrome.tabs.update(debuggerTab.id, {url: url}, onUpdate);
+      }, 
+      function onInvalid(msg) {
+        // TODO we are in a context menu handler, should we alert?
+        console.error(msg);
+        return;
+      }
+    );
+  };
+}
+
+// return a chrome.contextMenus onclick handler that opens and allows a debugger from 'site'
+//
+function debuggerOpener(site, callback, extraURLParams) {
+  // open blank and update to avoid racing debugger attaching to the tab   
+  //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
+  var crx2appBase = window.crx2appBase || "crx2app/extension"; 
+  var fakeBlankURL = crx2appBase + '/workaroundBug108519.html';
+  //**********
+  return halfWidthWindowOpener(fakeBlankURL, allowSiteWhenDebuggerOpens(site, callback, extraURLParams));
+}
 
 function obeyOptions() {
 
@@ -43,38 +93,16 @@ function obeyOptions() {
   options.allowedSites = options.allowedSites || [];
   
   options.allowedSites.forEach(function(allowedSite) {
-    var name = 'Debug With ' + allowedSite.name;  
-    if (name && name !== '(none)') {
-      // open blank and update to avoid racing debugger attaching to the tab   
-      //********** workaround for http://code.google.com/p/chromium/issues/detail?id=108519
-      var crx2appBase = window.crx2appBase; 
-      var fakeBlankURL = crx2appBase + '/workaroundBug108519.html';
-      //**********
-      buildContextMenuItem(name, fakeBlankURL, function onDebuggerWindowCreated(debuggeeTabId, win) {
-        var debuggerTab = win.tabs[0];
-        // We just created a window for the debugger. 
-        // We gave it a tabId via the URL parameters, it will now try to attach to that tabId
-        // We need to allow it by finding the right instance of windowsAdapter and calling addTab.
-        
-        crxEnd.checkDebuggerOrigin(allowedSite.site, function onValidOrigin(validOrigin) {
-          var windowsAdapter = crxEnd.getWindowsAdaptersByOrigin(validOrigin, debuggerTab);
-          if (!windowsAdapter) {  // then this origin has not been seen
-             windowsAdapter = crxEnd.createWindowsAdapter(validOrigin, debuggerTab);
-          }
-          windowsAdapter.addUserSelectedTab(debuggeeTabId);
-    
-          var url = allowedSite.site + '?tabId=' + debuggeeTabId + '&';
-          // now release the debugger
-          chrome.tabs.update(debuggerTab.id, {url: url}, function(tab) {
-          console.log("Opened debugger based on context menu click "+url);
-        });
+    var title = 'Debug With ' + allowedSite.name;  
+    if (title && title !== '(none)') {
+      var onClick = debuggerOpener(
+        allowedSite.site, 
+        function(debuggeeTab, debuggerTab) {
+          console.log("debugger %o, debugeee %o", debuggerTab, debuggeeTab);
+        }
+      );
 
-        }, function onInvalid(msg){
-           // TODO we are in a context menu handler, should we alert?
-            console.error(msg);
-            return;
-        });
-      });
+      buildContextMenuItem(title, onClick);
     }
   });
 }

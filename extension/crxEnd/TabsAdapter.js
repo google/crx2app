@@ -102,7 +102,7 @@ TabsAdapter.prototype = {
     var updateInfo = {focused: true};
     chrome.windows.update(this.windowsAdapter.debuggerTab.windowId, updateInfo, function(win) {
       if (chrome.extension.lastError) {
-        console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
+        console.error("crx2app onPageActionClicked ERROR ", chrome.extension.lastError);
       } else {
         if (debugWarnings) console.log("crx2app onPageActionClicked update window complete", win);
       }
@@ -110,7 +110,7 @@ TabsAdapter.prototype = {
     var updateProperties = {active: true, highlighted: true};
     chrome.tabs.update(this.windowsAdapter.debuggerTab.id, updateProperties, function(tab) {
       if (chrome.extension.lastError) {
-        console.error("crx2app onPageActionClicked ERROR "+chrome.extension.lastError);
+        console.error("crx2app onPageActionClicked ERROR ", chrome.extension.lastError);
       } else {
         if (debugWarnings) console.log("crx2app onPageActionClicked update complete", tab);
       }
@@ -157,7 +157,7 @@ TabsAdapter.prototype = {
     this.onCreated = this.onCreated.bind(this);
     this.onRemoved = this.onRemoved.bind(this);
     this.onUpdated = this.onUpdated.bind(this);
-    chrome.pageAction.onClicked.addListener(this.onPageActionClicked.bind(this));
+    //chrome.pageAction.onClicked.addListener(this.onPageActionClicked.bind(this));
   }
 };
 
