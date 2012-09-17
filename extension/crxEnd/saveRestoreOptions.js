@@ -6,12 +6,11 @@
 // used by options.html and crxEnd.js 
 // crx2app.options.allowedSites is array of {site: url, name: string}
 
-var crx2appOptionsKey = "crx2app.options";
+var optionsKey = "crx2app.options";
 
-function saveOptions() {
-  var options = {
-      allowedSites: []
-  };
+function extractExtensionInfos(options) {
+  options.allowedSites = [];
+
   var allowedSitesTable = document.getElementById('origins');
   var originElts = allowedSitesTable.getElementsByClassName('origin');
   for(var i = 0; i < originElts.length; i++) {
@@ -39,17 +38,18 @@ function saveOptions() {
 
   var warnReload = document.getElementById('warnReload');
   warnReload.classList.remove('hidden');  
-
-  var stringified = JSON.stringify(options);
-  window.localStorage.setItem(crx2appOptionsKey, stringified);
 }
 
+var defaultOptions = {
+
+};
+
+var crx2appOptions = new ExtensionOptions(optionsKey, defaultOptions, extractExtensionInfos);
+
 function restoreOptions() {
-  var stringified = window.localStorage.getItem(crx2appOptionsKey);
-  try {
-    var options = JSON.parse(stringified);
-    return options;
-  } catch (exc) {
-    // ignore corrupt data
-  }
+  return crx2appOptions.restoreOptions();
+}
+
+function saveOptions() {
+  crx2appOptions.saveOptions();
 }
