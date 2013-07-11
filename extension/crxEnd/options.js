@@ -139,6 +139,15 @@ function onAddRow(event) {
   edit(cloneElementByClass('allowedSite-template'));
 }
 
+function createSelector(elt) {
+  var selector = [];
+  var classList = elt.classList;
+  for(var i = 0; i < classList.length; i++) {
+    selector.push('.' + classList[i]);
+  }
+  return selector.join('');
+}
+
 function addListeners() {
   var addAllowedSiteRow = document.getElementById('addAllowedSiteRow');
   addAllowedSiteRow.addEventListener('click', function(event) {
@@ -149,6 +158,21 @@ function addListeners() {
   addExtensionInfosRow.addEventListener('click',function(event) {
     edit(cloneElementByClass('extensionInfo-template'));
   }, false);
+
+  document.body.addEventListener('click', function redispatch(event) {
+    var elt = event.target;
+    var selector = createSelector(elt);
+    if (elt.classList.contains('save') || elt.classList.contains('edit'))
+      changeState(event);
+    else if (elt.classList.contains('remove'))
+      revertState(event);
+    else if (elt.classList.contains('debugOption'))
+      onClickDebug(event);
+    else
+      return;
+
+    event.stopPropagation();
+  });
 }
 
 function onLoad() {

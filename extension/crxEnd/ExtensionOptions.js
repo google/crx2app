@@ -8,13 +8,14 @@ function ExtensionOptions(key, defaultOptions, extractOptionsFromUI) {
   if (!this.restoreOptions())  {
     this._setOptions(defaultOptions);
   }
-  this.extractOptionsFromUI = extractOptionsFromUI;  
+  this.extractOptionsFromUI = extractOptionsFromUI;
 }
 
 ExtensionOptions.prototype = {
 
   _setOptions: function(options) {
     var stringified = JSON.stringify(options);
+    console.log("_setOptions " + this.optionsKey, stringified)
     window.localStorage.setItem(this.optionsKey, stringified);
   },
 
@@ -27,14 +28,14 @@ ExtensionOptions.prototype = {
         return options;
       } catch (exc) {
         // ignore corrupt data
-      }  
+      }
     }
     return options;
   },
 
   saveOptions: function() {
     var options = this.restoreOptions() || {};
-    options = this.extractOptionsFromUI(options);
+    this.extractOptionsFromUI(options);
     this._setOptions(options);
   }
 }

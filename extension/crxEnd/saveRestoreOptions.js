@@ -3,7 +3,7 @@
 
 /*globals document window */
 
-// used by options.html and crxEnd.js 
+// used by options.html and crxEnd.js
 // crx2app.options.allowedSites is array of {site: url, name: string}
 
 var optionsKey = "crx2app.options";
@@ -17,13 +17,19 @@ function extractExtensionInfos(options) {
     var originElt = originElts[i];
     var origin = originElt.value;
     var contextMenuNameElt = originElt.parentElement.parentElement.querySelector('.contextMenuId');
-    
+
     if (origin) {
+      var allowedOrigin = ensureOrigin(origin);
+      if (allowedOrigin !== origin) {
+        var message = origin + ' is not a Web origin';
+        window.alert(message);
+        throw new Error(message);
+      }
       var name = contextMenuNameElt.value || '(none)';
       options.allowedSites.push({site: origin, name: name});
     }
   }
-  
+
   var debugConnection = document.getElementById('debugConnection');
   options.debugConnection = debugConnection.checked;
 
@@ -32,12 +38,12 @@ function extractExtensionInfos(options) {
 
   var debugWarnings = document.getElementById('debugWarnings');
   options.debugWarnings = debugWarnings.checked;
-  
+
   var debugAdapters = document.getElementById('debugAdapters');
   options.debugAdapters = debugAdapters.checked;
 
   var warnReload = document.getElementById('warnReload');
-  warnReload.classList.remove('hidden');  
+  warnReload.classList.remove('hidden');
 }
 
 var defaultOptions = {

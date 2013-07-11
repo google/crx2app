@@ -92,7 +92,7 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
   </tr>
   <tr class="allowedSite-template stateSaved"><!-- Don't use any ids in this element -->
     <td>
-      <button class="action" onclick="changeState(event);"> <!-- only one of these states will be visible at any time -->
+      <button class="action changeState"> <!-- only one of these states will be visible at any time -->
         <span class='edit'>Edit</span><!-- stateSaved, to go stateEditing -->
         <span class='save'>Save</span> <!-- statePreviewing, go to stateSaved -->
       </button>
@@ -103,7 +103,7 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
     <td>
       <input class="contextMenuId userInput" type='text' disabled='disabled' value='(none)'/>
     <td>
-      <button class="action" onclick="revertState(event);"> <!-- only one of these states will be visible at any time -->
+      <button class="action revertState"> <!-- only one of these states will be visible at any time -->
         <span class='remove'>Remove</span><!-- stateSaved, delete; stateEditing, go to statePreviewing -->
         <span class='cancel'>Cancel</span> <!-- statePreviewing, go to stateEditing -->
       </button>
@@ -115,8 +115,8 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
 </tbody>
 </table>
 </div>
-<h3>Devtools extensions</h3>
-<div class='extensionInfos'>
+<h3 class='hidden'>Devtools extensions</h3>
+<div class='hidden extensionInfos'>
 <table>
 <tbody>
 <tr>
@@ -127,7 +127,7 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
 </tr>
 <tr class='extensionInfo-template extensionInfos-row stateSaved'>
   <td>
-      <button class="action" onclick="changeState(event);"> <!-- only one of these states will be visible at any time -->
+      <button class="action changeState"> <!-- only one of these states will be visible at any time -->
         <span class='edit'>Edit</span><!-- stateSaved, to go stateEditing -->
         <span class='save'>Save</span> <!-- statePreviewing, go to stateSaved -->
       </button>
@@ -139,7 +139,7 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
     <input class="extensionInfo-startPage userInput" type="url" size="80"  disabled='disabled' />
   </td>
   <td>
-    <button class="action" onclick="revertState(event);"> <!-- only one of these states will be visible at any time -->
+    <button class="action revertState"> <!-- only one of these states will be visible at any time -->
       <span class='remove'>Remove</span><!-- stateSaved, delete; stateEditing, go to statePreviewing -->
       <span class='cancel'>Cancel</span> <!-- statePreviewing, go to stateEditing -->
     </button>
@@ -156,10 +156,10 @@ Warning: the Web sites you add in the table below will have some powers of Chrom
 <div id="debugOptions">
 <br />
   <div>Console Tracing Options For Debugging This Extension</div>
-  <input type='checkbox' id="debugConnection" onclick='onClickDebug(event)' />Trace connection events<br />
-  <input type='checkbox' id="debugMessages" onclick='onClickDebug(event)' />Trace messages<br />
-  <input type='checkbox' id="debugWarnings" onclick='onClickDebug(event)' />Trace Warning IO<br />
-  <input type='checkbox' id="debugAdapters" onclick='onClickDebug(event)' />Trace chrome.* adapters<br />
+  <input type='checkbox' id="debugConnection" class="debugOption"/>Trace connection events<br />
+  <input type='checkbox' id="debugMessages" class="debugOption"/>Trace messages<br />
+  <input type='checkbox' id="debugWarnings" class="debugOption"/>Trace Warning IO<br />
+  <input type='checkbox' id="debugAdapters" class="debugOption"/>Trace chrome.* adapters<br />
 </div>
 <br />
 <div>
